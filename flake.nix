@@ -29,9 +29,6 @@
         pkgs.ripgrep
         pkgs.yq-go
         pkgs.jq
-        # pkgs.lens # Kubernetes IDE
-        # pkgs.keepassxc # Password manager
-        # pkgs.postman # API development tool
         # Note: homebrew is not available in nixpkgs for aarch64-darwin.
         # Install Homebrew manually with:
         # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -79,13 +76,17 @@
                 pmodules = ["terminal" "completion" "directory" "syntax-highlighting" "autosuggestions" "osx" "utility" "prompt"];
               };
               shellAliases = {
-                gs = "git status";
                 vim = "nvim";
                 ls = "eza";
                 ll = "ls -lah";
                 cat = "bat --paging=never --theme=Dracula";
                 grep = "rg";
                 nu = "sudo darwin-rebuild switch";
+                ga = "git add";
+                gs = "git status";
+                gc = "git commit -m";
+                gpu = "git push";
+                gp = "git pull";
                 lens = "open -a Lens"; # Launch Lens
                 keepassxc = "open -a KeePassXC"; # Launch KeePassXC
                 postman = "open -a Postman"; # Launch Postman
