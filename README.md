@@ -50,6 +50,34 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ---
 
+## Terraform & tfenv
+
+This setup includes [`tfenv`](https://github.com/tfutils/tfenv) (installed via Homebrew) for managing multiple Terraform versions easily.
+
+### Installing Specific Terraform Versions
+
+After running `darwin-rebuild switch --flake .` and ensuring Homebrew is installed:
+
+```sh
+# List available Terraform versions
+$ tfenv list-remote
+
+# Install required versions
+$ tfenv install 0.13.7
+$ tfenv install 0.15.5
+
+# Set a global default (optional)
+$ tfenv use 0.15.5
+
+# Set a local version for a project
+$ cd /path/to/your/terraform/project
+$ tfenv use 0.13.7
+```
+
+You can switch between versions at any time using `tfenv use <version>`.
+
+---
+
 ## Customization
 
 - **Add or remove packages**: Edit the `environment.systemPackages` list in `flake.nix`.

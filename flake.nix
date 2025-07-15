@@ -29,17 +29,24 @@
         pkgs.ripgrep
         pkgs.yq-go
         pkgs.jq
-        # Note: homebrew is not available in nixpkgs for aarch64-darwin.
-        # Install Homebrew manually with:
-        # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        # Then use Homebrew to install OrbStack, Raycast, and Clipy.
+        pkgs.awscli
+        pkgs.opentofu
+        pkgs.kops
+        pkgs.ansible
+        pkgs.prometheus
+        pkgs.tree
+        pkgs.rsync
+        pkgs.wget
+        pkgs.docker-compose
+        pkgs.ncdu
+        pkgs.postgresql
       ];
       homebrew = {
         enable = true;
         onActivation.cleanup = "uninstall";
         taps = ["dimentium/autoraise"];
-        brews = [];
-        casks = ["lens" "postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp"];
+        brews = ["tfenv" "kube-ps1"];
+        casks = ["lens" "postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle"];
       };
       nix.settings.experimental-features = "nix-command flakes";
       nixpkgs.config.allowUnfree = true;
@@ -73,7 +80,17 @@
               prezto = {
                 enable = true;
                 prompt.theme = "adam2";
-                pmodules = ["terminal" "completion" "directory" "syntax-highlighting" "autosuggestions" "osx" "utility" "prompt"];
+                pmodules = [
+                  "environment"
+                  "terminal"
+                  "completion"
+                  "directory"
+                  "syntax-highlighting"
+                  "autosuggestions"
+                  "osx"
+                  "utility"
+                  "prompt"
+                ];
               };
               shellAliases = {
                 vim = "nvim";
@@ -83,32 +100,42 @@
                 grep = "rg";
                 nu = "sudo darwin-rebuild switch";
                 ga = "git add";
+                gd = "git diff";
                 gs = "git status";
                 gc = "git commit -m";
                 gpu = "git push";
                 gp = "git pull";
-                lens = "open -a Lens"; # Launch Lens
-                keepassxc = "open -a KeePassXC"; # Launch KeePassXC
-                postman = "open -a Postman"; # Launch Postman
-                orbstack = "open -a OrbStack"; # Launch OrbStack (after Homebrew install)
-                raycast = "open -a Raycast"; # Launch Raycast (after Homebrew install)
-                clipy = "open -a Clipy"; # Launch Clipy (after Homebrew install)
-                code = "open -a Windsurf"; # Launch Windsurf (after Homebrew install)
+                lens = "open -a Lens";
+                keepassxc = "open -a KeePassXC";
+                postman = "open -a Postman";
+                orbstack = "open -a OrbStack";
+                raycast = "open -a Raycast";
+                clipy = "open -a Clipy";
+                code = "open -a Windsurf"; # Note: Windsurf may not be correct; replace with actual app name (e.g., "Visual Studio Code")
               };
               initContent = ''
                 # Source custom functions
                 source ~/.functions
-
+                # Enable Homebrew environment
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+                # Source kube-ps1 for Kubernetes context in prompt
+                source /opt/homebrew/opt/kube-ps1/share/kube-ps1.sh
+                # Customize kube-ps1 settings
+                KUBE_PS1_SYMBOL_ENABLE=false
+                KUBE_PS1_PREFIX='('
+                KUBE_PS1_SUFFIX=')'
+                # Integrate kube-ps1 with adam2 prompt
+                zstyle ':prezto:module:prompt' theme 'adam2'
+                PROMPT='$(kube_ps1)'$PROMPT
                 # Enable fzf key bindings for Ctrl+R history search
                 source ${pkgs.fzf}/share/fzf/key-bindings.zsh
                 source ${pkgs.fzf}/share/fzf/completion.zsh
-
                 # Enable kubectl and helm completions
                 source <(kubectl completion zsh)
                 source <(helm completion zsh)
-
                 # fzf and history settings
                 export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border'
+                export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
                 export HISTSIZE=10000
                 export SAVEHIST=100000
                 export SHARE_HISTORY=true
@@ -118,6 +145,11 @@
               function hello() {
                 echo "Hello, $1!"
               }
+            '';
+            # Configure bat
+            home.file.".config/bat/config".text = ''
+              --theme=Dracula
+              --style=numbers,changes
             '';
           };
         }
