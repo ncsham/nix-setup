@@ -37,7 +37,7 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 3. **Switch to the new configuration:**
    ```sh
-   darwin-rebuild switch --flake .
+   darwin-rebuild switch --flake '.#darwin'
    ```
 
 4. **(Optional) Install Homebrew apps:**
@@ -58,7 +58,7 @@ This setup includes [`tfenv`](https://github.com/tfutils/tfenv) (installed via H
 
 ### Installing Specific Terraform Versions
 
-After running `darwin-rebuild switch --flake .` and ensuring Homebrew is installed:
+After running `darwin-rebuild switch --flake '.#darwin'` and ensuring Homebrew is installed:
 
 ```sh
 # List available Terraform versions

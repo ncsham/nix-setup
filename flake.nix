@@ -65,7 +65,7 @@
     };
   in
   {
-    darwinConfigurations."NT-IT-LT-3209" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
       modules = [
         configuration
         home-manager.darwinModules.home-manager
@@ -99,7 +99,7 @@
                 ll = "ls -lah";
                 cat = "bat --paging=never --theme=Dracula";
                 grep = "rg";
-                nu = "sudo darwin-rebuild switch";
+                nu = "sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
                 g = "git";
                 ga = "git add";
                 gd = "git diff";
