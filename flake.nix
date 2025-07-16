@@ -100,6 +100,7 @@
                 cat = "bat --paging=never --theme=Dracula";
                 grep = "rg";
                 nu = "sudo darwin-rebuild switch";
+                g = "git";
                 ga = "git add";
                 gd = "git diff";
                 gs = "git status";
@@ -161,6 +162,52 @@
             home.file.".functions".text = ''
               function hello() {
                 echo "Hello, $1!"
+              }
+              
+              # Kubectl convenience functions
+              # ktp - kubectl tail logs of pods
+              # Usage: ktp <namespace> <pod-name>
+              function ktp() {
+                if [ $# -ne 2 ]; then
+                  echo "Usage: ktp <namespace> <pod-name>"
+                  return 1
+                fi
+                kubectl logs -f "$2" -n "$1"
+              }
+              
+              # klp - kubectl logs of pods
+              # Usage: klp <namespace> <pod-name>
+              function klp() {
+                if [ $# -ne 2 ]; then
+                  echo "Usage: klp <namespace> <pod-name>"
+                  return 1
+                fi
+                kubectl logs "$2" -n "$1"
+              }
+              
+              # kep - kubectl exec pod
+              # Usage: kep <namespace> <pod-name>
+              function kep() {
+                if [ $# -ne 2 ]; then
+                  echo "Usage: kep <namespace> <pod-name>"
+                  return 1
+                fi
+                kubectl exec -it "$2" -n "$1" -- /bin/bash
+              }
+              
+              # kgp - kubectl get pods
+              # Usage: kgp <namespace> <pod-name-pattern>
+              function kgp() {
+                if [ $# -eq 0 ]; then
+                  kubectl get pods --all-namespaces
+                elif [ $# -eq 1 ]; then
+                  kubectl get pods -n "$1"
+                elif [ $# -eq 2 ]; then
+                  kubectl get pods -n "$1" | grep "$2"
+                else
+                  echo "Usage: kgp [namespace] [pod-name-pattern]"
+                  return 1
+                fi
               }
             '';
             # Configure bat
