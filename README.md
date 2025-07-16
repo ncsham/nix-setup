@@ -17,6 +17,37 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ---
 
+## Table of Contents
+
+- [Initial Setup from Scratch](#initial-setup-from-scratch)
+  - [Step 1: Install the Determinate Nix Distribution](#step-1-install-the-determinate-nix-distribution)
+  - [Step 2: Create the Base Configuration Directory](#step-2-create-the-base-configuration-directory)
+  - [Step 3: Initialize with Unstable Nixpkgs](#step-3-initialize-with-unstable-nixpkgs)
+  - [Step 4: Initial nix-darwin Installation](#step-4-initial-nix-darwin-installation)
+  - [Step 5: Install Homebrew](#step-5-install-homebrew-optional-but-recommended)
+  - [Step 6: Replace with This Configuration](#step-6-replace-with-this-configuration)
+  - [Step 7: Verify Installation](#step-7-verify-installation)
+- [Getting Started](#getting-started)
+  - [For Existing nix-darwin Users](#for-existing-nix-darwin-users)
+  - [Quick Commands After Setup](#quick-commands-after-setup)
+- [Key Components](#key-components)
+- [Terraform & tfenv](#terraform--tfenv)
+  - [Installing Specific Terraform Versions](#installing-specific-terraform-versions)
+- [Kubernetes Helper Functions](#kubernetes-helper-functions)
+  - [Available Functions](#available-functions)
+  - [Shell Features](#shell-features)
+- [Included Packages](#included-packages)
+  - [Development Tools](#development-tools)
+  - [Cloud & Infrastructure](#cloud--infrastructure)
+  - [Kubernetes & Container Tools](#kubernetes--container-tools)
+  - [System Utilities](#system-utilities)
+  - [Homebrew Packages](#homebrew-packages)
+- [Customization](#customization)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
+
+---
+
 ## Initial Setup from Scratch
 
 If you're setting up nix-darwin for the first time on a fresh macOS system, follow these steps:
