@@ -41,6 +41,15 @@
         pkgs.ncdu
         pkgs.postgresql
         pkgs.minikube
+        pkgs.k9s
+        pkgs.kubectx
+        pkgs.kubens
+        pkgs.stern
+        pkgs.dive
+        pkgs.bottom
+        pkgs.procs
+        pkgs.dust
+        pkgs.bandwhich
       ];
       homebrew = {
         enable = true;
