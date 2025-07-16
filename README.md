@@ -17,31 +17,121 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ---
 
+## Initial Setup from Scratch
+
+If you're setting up nix-darwin for the first time on a fresh macOS system, follow these steps:
+
+### Step 1: Install the Determinate Nix Distribution
+The Determinate Nix installer provides a more reliable and feature-complete Nix installation:
+```bash
+curl -fsSL https://install.determinate.systems/nix | sh -s -- install --determinate
+```
+
+### Step 2: Create the Base Configuration Directory
+Set up the nix-darwin configuration directory with proper permissions:
+```bash
+sudo mkdir -p /etc/nix-darwin
+sudo chown $(id -nu):$(id -ng) /etc/nix-darwin
+cd /etc/nix-darwin
+```
+
+### Step 3: Initialize with Unstable Nixpkgs
+Create a basic flake configuration and customize it for your system:
+```bash
+# Initialize the flake template
+nix flake init -t nix-darwin/master
+
+# Replace 'simple' with your actual hostname (optional - you can use 'darwin' for generic)
+sed -i '' "s/simple/$(scutil --get LocalHostName)/" flake.nix
+# OR use generic configuration:
+sed -i '' "s/simple/darwin/" flake.nix
+```
+
+### Step 4: Initial nix-darwin Installation
+Install nix-darwin for the first time:
+```bash
+sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake '.#darwin'
+```
+
+### Step 5: Install Homebrew (Optional but Recommended)
+Homebrew is needed for GUI applications and some packages not available in nixpkgs:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### Step 6: Replace with This Configuration
+Now you can replace the basic template with this comprehensive configuration:
+```bash
+# Clone this repository
+git clone https://github.com/ncsham/nix-setup.git /tmp/nix-setup
+
+# Backup the original files
+cp flake.nix flake.nix.bak
+cp flake.lock flake.lock.bak 2>/dev/null || true
+
+# Copy the comprehensive configuration
+cp /tmp/nix-setup/flake.nix .
+cp /tmp/nix-setup/flake.lock .
+cp /tmp/nix-setup/README.md .
+
+# Apply the new configuration
+sudo darwin-rebuild switch --flake '.#darwin'
+```
+
+### Step 7: Verify Installation
+After the rebuild completes, start a new shell session and verify:
+```bash
+# Check if the 'nu' alias works
+nu
+
+# Verify Kubernetes functions
+kgp --help 2>/dev/null || echo "kubectl not configured yet"
+
+# Check if Homebrew packages are installed
+brew list | grep -E "tfenv|kube-ps1"
+```
+
+---
+
 ## Getting Started
 
-### Prerequisites
-- [Nix](https://nixos.org/download.html) (with Flakes enabled)
-- [nix-darwin](https://github.com/LnL7/nix-darwin#installation)
-- (Optional) [Homebrew](https://brew.sh/) for additional casks
+*If you're setting up nix-darwin from scratch, see the [Initial Setup from Scratch](#initial-setup-from-scratch) section above.*
 
-### Installation
+### For Existing nix-darwin Users
 
-1. **Clone the repository:**
-   ```sh
-   git clone <your-repo-url> ~/nix-darwin
-   cd ~/nix-darwin
+If you already have nix-darwin installed and want to use this configuration:
+
+1. **Clone this repository:**
+   ```bash
+   git clone https://github.com/ncsham/nix-setup.git /tmp/nix-setup
+   cd /etc/nix-darwin  # or wherever your nix-darwin config is located
    ```
 
-2. **Review and edit `flake.nix`:**
-   - Adjust the `system.primaryUser`, `users.users.<username>`, and other fields as needed for your setup.
-
-3. **Switch to the new configuration:**
-   ```sh
-   darwin-rebuild switch --flake '.#darwin'
+2. **Backup your current configuration:**
+   ```bash
+   cp flake.nix flake.nix.bak
+   cp flake.lock flake.lock.bak 2>/dev/null || true
    ```
 
-4. **(Optional) Install Homebrew apps:**
-   - If you want to use Homebrew casks, ensure Homebrew is installed manually (see comments in `flake.nix`).
+3. **Copy the new configuration:**
+   ```bash
+   cp /tmp/nix-setup/flake.nix .
+   cp /tmp/nix-setup/flake.lock .
+   ```
+
+4. **Review and customize the configuration:**
+   - Edit `flake.nix` to adjust usernames, paths, and package selections as needed
+   - The configuration uses `nitheeshchandrashamanthu` as the username - change this to your username
+
+5. **Apply the new configuration:**
+   ```bash
+   sudo darwin-rebuild switch --flake '.#darwin'
+   ```
+
+### Quick Commands After Setup
+- **Update system**: Use `nu` alias from anywhere
+- **Manage Terraform versions**: `tfenv list-remote`, `tfenv install <version>`, `tfenv use <version>`
+- **Kubernetes shortcuts**: `kgp`, `klp`, `ktp`, `kep` (see [Kubernetes Helper Functions](#kubernetes-helper-functions))
 
 ---
 
