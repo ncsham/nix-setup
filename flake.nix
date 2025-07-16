@@ -40,6 +40,7 @@
         pkgs.docker-compose
         pkgs.ncdu
         pkgs.postgresql
+        pkgs.minikube
       ];
       homebrew = {
         enable = true;
@@ -105,7 +106,11 @@
                 gc = "git commit -m";
                 gpu = "git push";
                 gp = "git pull";
+                k = "kubectl";
+                ssp = "cp ~/.ssh/config_personal ~/.ssh/config";
+                ssw = "cp ~/.ssh/config_work ~/.ssh/config";
                 lens = "open -a Lens";
+                arc = "open -a Arc";
                 keepassxc = "open -a KeePassXC";
                 postman = "open -a Postman";
                 orbstack = "open -a OrbStack";
@@ -121,12 +126,24 @@
                 # Source kube-ps1 for Kubernetes context in prompt
                 source /opt/homebrew/opt/kube-ps1/share/kube-ps1.sh
                 # Customize kube-ps1 settings
-                KUBE_PS1_SYMBOL_ENABLE=false
+                KUBE_PS1_SYMBOL_ENABLE=true
                 KUBE_PS1_PREFIX='('
                 KUBE_PS1_SUFFIX=')'
-                # Integrate kube-ps1 with adam2 prompt
+                # Set prezto theme first
                 zstyle ':prezto:module:prompt' theme 'adam2'
-                PROMPT='$(kube_ps1)'$PROMPT
+                # Use prezto's precmd hook to add kube-ps1 after theme loads
+                autoload -Uz add-zsh-hook
+                # Store original RPROMPT to avoid accumulation
+                _original_rprompt="$RPROMPT"
+                _kube_ps1_update_prompt() {
+                  # Reset to original RPROMPT first
+                  RPROMPT="$_original_rprompt"
+                  # Add kube-ps1 if kubectl context exists
+                  if kubectl config current-context &>/dev/null; then
+                    RPROMPT="$(kube_ps1)$RPROMPT"
+                  fi
+                }
+                add-zsh-hook precmd _kube_ps1_update_prompt
                 # Enable fzf key bindings for Ctrl+R history search
                 source ${pkgs.fzf}/share/fzf/key-bindings.zsh
                 source ${pkgs.fzf}/share/fzf/completion.zsh
@@ -150,6 +167,20 @@
             home.file.".config/bat/config".text = ''
               --theme=Dracula
               --style=numbers,changes
+            '';
+            home.file.".ssh/config_work".text = ''
+              Include ~/.orbstack/ssh/config
+              Host github.com
+                AddKeysToAgent yes
+                UseKeychain yes
+                IdentityFile ~/.ssh/id_ed25519_work
+            '';
+            home.file.".ssh/config_personal".text = ''
+              Include ~/.orbstack/ssh/config
+              Host github.com
+                AddKeysToAgent yes
+                UseKeychain yes
+                IdentityFile ~/.ssh/id_ed25519
             '';
           };
         }
