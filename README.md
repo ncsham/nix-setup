@@ -9,8 +9,10 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 - **Reproducible macOS Configuration**: All system settings, packages, and user preferences are managed from a single `flake.nix` file.
 - **Nix-Darwin Integration**: Leverage the power of Nix to manage macOS like NixOS.
 - **Home-Manager**: Manage user-level packages and dotfiles declaratively.
-- **Preconfigured Packages**: Includes a curated set of CLI tools (e.g., `neovim`, `git`, `htop`, `tmux`, `fzf`, `ripgrep`, etc.).
-- **Homebrew Support**: Optionally install GUI apps and other tools via Homebrew casks.
+- **Comprehensive Package Set**: Includes development tools (`go`, `python3`, `awscli`, `opentofu`), Kubernetes tools (`kubectl`, `helm`, `minikube`, `kops`), system utilities (`bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`), and more.
+- **Kubernetes Integration**: Pre-configured with kubectl/helm completions and custom Kubernetes helper functions.
+- **Enhanced Shell Experience**: ZSH configuration with fzf integration, history management, and custom prompt with kube-ps1.
+- **Homebrew Support**: GUI apps and additional tools via Homebrew (Lens, Postman, Raycast, etc.).
 - **Apple Silicon Ready**: Configured for `aarch64-darwin` (Apple Silicon/M1/M2).
 
 ---
@@ -75,6 +77,78 @@ $ tfenv use 0.13.7
 ```
 
 You can switch between versions at any time using `tfenv use <version>`.
+
+---
+
+## Kubernetes Helper Functions
+
+This configuration includes several custom Kubernetes functions for easier cluster management:
+
+### Available Functions
+
+- **`kgp`** - kubectl get pods
+  ```sh
+  kgp                    # Get all pods in all namespaces
+  kgp <namespace>        # Get pods in specific namespace
+  kgp <namespace> <pattern>  # Get pods matching pattern in namespace
+  ```
+
+- **`klp`** - kubectl logs pods
+  ```sh
+  klp <namespace> <pod-name>  # Get logs from a pod
+  ```
+
+- **`ktp`** - kubectl tail logs of pods
+  ```sh
+  ktp <namespace> <pod-name>  # Follow/tail logs from a pod
+  ```
+
+- **`kep`** - kubectl exec pod
+  ```sh
+  kep <namespace> <pod-name>  # Execute bash shell in a pod
+  ```
+
+### Shell Features
+
+- **Kube-PS1**: Current Kubernetes context and namespace displayed in prompt
+- **kubectl/helm completions**: Tab completion for kubectl and helm commands
+- **fzf integration**: Enhanced history search with Ctrl+R
+- **Enhanced history**: 100k command history with sharing between sessions
+
+---
+
+## Included Packages
+
+### Development Tools
+- **Languages**: `go`, `python3`
+- **Editors**: `neovim`
+- **Version Control**: `git`
+
+### Cloud & Infrastructure
+- **AWS**: `awscli`
+- **Terraform**: `opentofu` (OpenTofu)
+- **Configuration Management**: `ansible`
+
+### Kubernetes & Container Tools
+- **Core**: `kubectl`, `kubernetes-helm`, `minikube`
+- **Management**: `kops`
+- **Container**: `docker-compose`
+
+### System Utilities
+- **File Management**: `bat`, `eza`, `tree`, `rsync`, `ncdu`
+- **Search**: `fzf`, `ripgrep`
+- **System Monitoring**: `htop`, `prometheus`
+- **Terminal**: `tmux`
+- **Data Processing**: `jq`, `yq-go`
+- **Network**: `wget`
+- **Database**: `mycli`, `postgresql`
+
+### Homebrew Packages
+- **Development**: Lens (Kubernetes IDE), Postman (API testing)
+- **Productivity**: Raycast (launcher), Clipy (clipboard), Rectangle (window management)
+- **Security**: KeePassXC (password manager)
+- **Infrastructure**: OrbStack (containers), AutoRaise
+- **CLI Tools**: `tfenv` (Terraform version manager), `kube-ps1` (Kubernetes prompt)
 
 ---
 
