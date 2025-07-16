@@ -43,7 +43,6 @@
         pkgs.minikube
         pkgs.k9s
         pkgs.kubectx
-        pkgs.kubens
         pkgs.stern
         pkgs.dive
         pkgs.bottom
