@@ -45,10 +45,7 @@
         pkgs.kubectx
         pkgs.stern
         pkgs.dive
-        pkgs.bottom
-        pkgs.procs
         pkgs.dust
-        pkgs.bandwhich
       ];
       homebrew = {
         enable = true;
