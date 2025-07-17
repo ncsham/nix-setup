@@ -46,6 +46,7 @@
         pkgs.stern
         pkgs.dive
         pkgs.dust
+        pkgs.oci-cli
       ];
       homebrew = {
         enable = true;
