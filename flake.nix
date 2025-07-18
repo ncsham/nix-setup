@@ -47,6 +47,9 @@
         pkgs.dive
         pkgs.dust
         pkgs.oci-cli
+        pkgs.jsonnet
+        pkgs.jsonnet-bundler
+        pkgs.kubecolor
       ];
       homebrew = {
         enable = true;
@@ -113,7 +116,8 @@
                 gc = "git commit -m";
                 gpu = "git push";
                 gp = "git pull";
-                k = "kubectl";
+                k = "kubecolor";
+                kubectl = "kubecolor";
                 ssp = "cp ~/.ssh/config_personal ~/.ssh/config";
                 ssw = "cp ~/.ssh/config_work ~/.ssh/config";
                 lens = "open -a Lens";
