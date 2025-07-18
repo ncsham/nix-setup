@@ -167,6 +167,7 @@
                 export HISTSIZE=10000
                 export SAVEHIST=100000
                 export SHARE_HISTORY=true
+                export AWS_DEFAULT_REGION=ap-south-1
               '';
             };
             home.file.".functions".text = ''
