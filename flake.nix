@@ -110,6 +110,10 @@
                 cat = "bat --paging=never --theme=Dracula";
                 grep = "rg";
                 nu = "sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
+                # Package update aliases
+                nix-update = "nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
+                brew-update = "brew update && brew upgrade && brew cleanup";
+                system-update = "echo 'Updating Homebrew...' && brew update && brew upgrade && brew cleanup && echo 'Updating Nix packages...' && nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin' && echo 'All updates complete!'";
                 g = "git";
                 ga = "git add";
                 gd = "git diff";
