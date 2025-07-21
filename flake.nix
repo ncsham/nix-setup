@@ -50,6 +50,7 @@
         pkgs.jsonnet
         pkgs.jsonnet-bundler
         pkgs.kubecolor
+        pkgs.kubectx
       ];
       homebrew = {
         enable = true;
@@ -118,8 +119,11 @@
                 gp = "git pull";
                 k = "kubecolor";
                 kubectl = "kubecolor";
+                kd = "kubecolor diff -f";
+                ka = "kubecolor apply -f";
                 ssp = "cp ~/.ssh/config_personal ~/.ssh/config";
                 ssw = "cp ~/.ssh/config_work ~/.ssh/config";
+                ktx = "kubectx";
                 lens = "open -a Lens";
                 arc = "open -a Arc";
                 keepassxc = "open -a KeePassXC";
@@ -183,7 +187,7 @@
                   echo "Usage: ktp <namespace> <pod-name>"
                   return 1
                 fi
-                kubectl logs -f "$2" -n "$1"
+                kubecolor logs -f "$2" -n "$1"
               }
               
               # klp - kubectl logs of pods
@@ -193,7 +197,7 @@
                   echo "Usage: klp <namespace> <pod-name>"
                   return 1
                 fi
-                kubectl logs "$2" -n "$1"
+                kubecolor logs "$2" -n "$1"
               }
               
               # kep - kubectl exec pod
@@ -203,18 +207,19 @@
                   echo "Usage: kep <namespace> <pod-name>"
                   return 1
                 fi
-                kubectl exec -it "$2" -n "$1" -- /bin/bash
+                # Single exec with shell fallback logic
+                kubecolor exec -it "$2" -n "$1" -- sh -c 'exec /bin/bash 2>/dev/null || exec /bin/sh 2>/dev/null || exec bash 2>/dev/null || exec sh 2>/dev/null || (echo "No shell found"; exit 1)'
               }
               
               # kgp - kubectl get pods
               # Usage: kgp <namespace> <pod-name-pattern>
               function kgp() {
                 if [ $# -eq 0 ]; then
-                  kubectl get pods --all-namespaces
+                  kubecolor get pods --all-namespaces
                 elif [ $# -eq 1 ]; then
-                  kubectl get pods -n "$1"
+                  kubecolor get pods -n "$1"
                 elif [ $# -eq 2 ]; then
-                  kubectl get pods -n "$1" | grep "$2"
+                  kubecolor get pods -n "$1" | grep "$2"
                 else
                   echo "Usage: kgp [namespace] [pod-name-pattern]"
                   return 1
