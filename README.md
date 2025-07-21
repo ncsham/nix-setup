@@ -203,30 +203,42 @@ You can switch between versions at any time using `tfenv use <version>`.
 
 ## Kubernetes Helper Functions
 
-This configuration includes several custom Kubernetes functions for easier cluster management:
+This configuration provides several helper functions and aliases to make working with Kubernetes easier. All kubectl commands use `kubecolor` for better readability.
 
-### Available Functions
+### Quick Reference Aliases
 
-- **`kgp`** - kubectl get pods
-  ```sh
-  kgp                    # Get all pods in all namespaces
-  kgp <namespace>        # Get pods in specific namespace
-  kgp <namespace> <pattern>  # Get pods matching pattern in namespace
+- **k**: Short alias for `kubectl` (actually `kubecolor`)
+- **ka**: Apply Kubernetes manifests (`kubecolor apply -f`)
+- **kd**: Show differences before applying (`kubecolor diff -f`)
+- **ktx**: Switch Kubernetes contexts (requires `kubectx`)
+
+**Usage Examples:**
+```bash
+# Quick kubectl commands
+k get pods                    # Same as kubectl get pods but with colors
+ka deployment.yaml           # Apply a deployment file
+kd deployment.yaml           # Show what would change before applying
+ktx staging                  # Switch to staging context
+```
+
+### Helper Functions
+
+- **klp** `<namespace> <pod-name>`: Get logs from a specific pod
+  ```bash
+  klp default my-app-pod     # Get logs from my-app-pod in default namespace
   ```
 
-- **`klp`** - kubectl logs pods
-  ```sh
-  klp <namespace> <pod-name>  # Get logs from a pod
+- **kep** `<namespace> <pod-name>`: Execute into a pod with intelligent shell detection
+  ```bash
+  kep default my-app-pod     # Connect to my-app-pod in default namespace
   ```
+  **Note:** This function automatically tries multiple shells (`/bin/bash`, `/bin/sh`, `bash`, `sh`) to find one that works in the container, making it compatible with any Linux container.
 
-- **`ktp`** - kubectl tail logs of pods
-  ```sh
-  ktp <namespace> <pod-name>  # Follow/tail logs from a pod
-  ```
-
-- **`kep`** - kubectl exec pod
-  ```sh
-  kep <namespace> <pod-name>  # Execute bash shell in a pod
+- **kgp** `[namespace] [pod-name-pattern]`: Get pods with flexible filtering
+  ```bash
+  kgp                        # Get all pods in all namespaces
+  kgp default                # Get all pods in 'default' namespace  
+  kgp default my-app         # Get pods containing 'my-app' in 'default' namespace
   ```
 
 ### Shell Features
