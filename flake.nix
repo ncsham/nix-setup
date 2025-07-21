@@ -56,7 +56,7 @@
         enable = true;
         onActivation.cleanup = "uninstall";
         taps = ["dimentium/autoraise"];
-        brews = ["tfenv" "kube-ps1"];
+        brews = ["tfenv" "kube-ps1" "node@24"];
         casks = ["lens" "postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle"];
       };
       nix.settings.experimental-features = "nix-command flakes";
@@ -124,6 +124,8 @@
                 ssp = "cp ~/.ssh/config_personal ~/.ssh/config";
                 ssw = "cp ~/.ssh/config_work ~/.ssh/config";
                 ktx = "kubectx";
+                kns = "kubens";
+                awsp = "source _awsp";
                 lens = "open -a Lens";
                 arc = "open -a Arc";
                 keepassxc = "open -a KeePassXC";
@@ -138,6 +140,10 @@
                 source ~/.functions
                 # Enable Homebrew environment
                 eval "$(/opt/homebrew/bin/brew shellenv)"
+                # Load persistent AWS profile if exists
+                if [[ -f ~/.awsp && -s ~/.awsp ]]; then
+                  export AWS_PROFILE=$(cat ~/.awsp)
+                fi
                 # Source kube-ps1 for Kubernetes context in prompt
                 source /opt/homebrew/opt/kube-ps1/share/kube-ps1.sh
                 # Customize kube-ps1 settings
@@ -148,17 +154,26 @@
                 zstyle ':prezto:module:prompt' theme 'adam2'
                 # Use prezto's precmd hook to add kube-ps1 after theme loads
                 autoload -Uz add-zsh-hook
-                # Store original RPROMPT to avoid accumulation
-                _original_rprompt="$RPROMPT"
-                _kube_ps1_update_prompt() {
-                  # Reset to original RPROMPT first
-                  RPROMPT="$_original_rprompt"
-                  # Add kube-ps1 if kubectl context exists
-                  if kubectl config current-context &>/dev/null; then
-                    RPROMPT="$(kube_ps1)$RPROMPT"
+                # AWS Profile display function (similar to kube-ps1)
+                aws_ps1() {
+                  if [[ -n "$AWS_PROFILE" ]]; then
+                    echo "(%{$fg[green]%}☁|$AWS_PROFILE%{$reset_color%})"
                   fi
                 }
-                add-zsh-hook precmd _kube_ps1_update_prompt
+                # Store original RPROMPT to avoid accumulation
+                _original_rprompt="$RPROMPT"
+                _kube_aws_ps1_update_prompt() {
+                  # Reset to original RPROMPT first
+                  RPROMPT="$_original_rprompt"
+                  # Add kube-ps1 if kubectl context exists, then AWS profile
+                  if kubectl config current-context &>/dev/null; then
+                    RPROMPT="$(kube_ps1)$(aws_ps1)$RPROMPT"
+                  else
+                    # If no k8s context, just show AWS profile
+                    RPROMPT="$(aws_ps1)$RPROMPT"
+                  fi
+                }
+                add-zsh-hook precmd _kube_aws_ps1_update_prompt
                 # Enable fzf key bindings for Ctrl+R history search
                 source ${pkgs.fzf}/share/fzf/key-bindings.zsh
                 source ${pkgs.fzf}/share/fzf/completion.zsh
@@ -166,7 +181,7 @@
                 source <(kubectl completion zsh)
                 source <(helm completion zsh)
                 # fzf and history settings
-                export FZF_DEFAULT_OPTS='--height 50% --layout=reverse --border'
+                export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9 --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6 --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4 --height 50% --layout=reverse --border'
                 export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
                 export HISTSIZE=10000
                 export SAVEHIST=100000
