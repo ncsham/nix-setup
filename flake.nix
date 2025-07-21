@@ -136,36 +136,59 @@
                 code = "open -a Windsurf"; # Note: Windsurf may not be correct; replace with actual app name (e.g., "Visual Studio Code")
               };
               initContent = ''
+                # ============================================================================
+                # SHELL INITIALIZATION CONFIGURATION
+                # ============================================================================
+                
+                # ----------------------------------------------------------------------------
+                # Basic Environment Setup
+                # ----------------------------------------------------------------------------
+                
                 # Source custom functions
                 source ~/.functions
+                
                 # Enable Homebrew environment
                 eval "$(/opt/homebrew/bin/brew shellenv)"
+                
                 # Load persistent AWS profile if exists
                 if [[ -f ~/.awsp && -s ~/.awsp ]]; then
                   export AWS_PROFILE=$(cat ~/.awsp)
                 fi
+                
+                # ----------------------------------------------------------------------------
+                # Prompt Configuration
+                # ----------------------------------------------------------------------------
+                
                 # Source kube-ps1 for Kubernetes context in prompt
                 source /opt/homebrew/opt/kube-ps1/share/kube-ps1.sh
+                
                 # Customize kube-ps1 settings
                 KUBE_PS1_SYMBOL_ENABLE=true
                 KUBE_PS1_PREFIX='('
                 KUBE_PS1_SUFFIX=')'
-                # Set prezto theme first
+                
+                # Set prezto theme
                 zstyle ':prezto:module:prompt' theme 'adam2'
-                # Use prezto's precmd hook to add kube-ps1 after theme loads
+                
+                # Use prezto's precmd hook to add custom prompt elements
                 autoload -Uz add-zsh-hook
+                
                 # AWS Profile display function (similar to kube-ps1)
                 aws_ps1() {
                   if [[ -n "$AWS_PROFILE" ]]; then
                     echo "(%{$fg[green]%}☁|$AWS_PROFILE%{$reset_color%})"
                   fi
                 }
+                
                 # Store original RPROMPT to avoid accumulation
                 _original_rprompt="$RPROMPT"
+                
+                # Custom prompt update function
                 _kube_aws_ps1_update_prompt() {
                   # Reset to original RPROMPT first
                   RPROMPT="$_original_rprompt"
-                  # Add kube-ps1 if kubectl context exists, then AWS profile
+                  
+                  # Direct kubectl context check for real-time accuracy
                   if kubectl config current-context &>/dev/null; then
                     RPROMPT="$(kube_ps1)$(aws_ps1)$RPROMPT"
                   else
@@ -173,19 +196,51 @@
                     RPROMPT="$(aws_ps1)$RPROMPT"
                   fi
                 }
+                
+                # Hook the prompt update function
                 add-zsh-hook precmd _kube_aws_ps1_update_prompt
-                # Enable fzf key bindings for Ctrl+R history search
-                source ${pkgs.fzf}/share/fzf/key-bindings.zsh
-                source ${pkgs.fzf}/share/fzf/completion.zsh
-                # Enable kubectl and helm completions
-                source <(kubectl completion zsh)
-                source <(helm completion zsh)
-                # fzf and history settings
+                
+                # ----------------------------------------------------------------------------
+                # Async Completion Loading (Performance Optimization)
+                # ----------------------------------------------------------------------------
+                
+                # Load kubectl and helm completions asynchronously in background
+                {
+                  # Load kubectl completion if kubectl is available
+                  if command -v kubectl >/dev/null 2>&1; then
+                    source <(kubectl completion zsh) 2>/dev/null
+                  fi
+                  
+                  # Load helm completion if helm is available
+                  if command -v helm >/dev/null 2>&1; then
+                    source <(helm completion zsh) 2>/dev/null
+                  fi
+                } &!
+                
+                # ----------------------------------------------------------------------------
+                # FZF Configuration
+                # ----------------------------------------------------------------------------
+                
+                # Load fzf key bindings and completion
+                source ${pkgs.fzf}/share/fzf/key-bindings.zsh 2>/dev/null
+                source ${pkgs.fzf}/share/fzf/completion.zsh 2>/dev/null
+                
+                # FZF appearance and behavior settings
                 export FZF_DEFAULT_OPTS='--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9 --color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9 --color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6 --color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4 --height 50% --layout=reverse --border'
                 export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
+                
+                # ----------------------------------------------------------------------------
+                # Shell History Configuration
+                # ----------------------------------------------------------------------------
+                
                 export HISTSIZE=10000
                 export SAVEHIST=100000
                 export SHARE_HISTORY=true
+                
+                # ----------------------------------------------------------------------------
+                # AWS Configuration
+                # ----------------------------------------------------------------------------
+                
                 export AWS_DEFAULT_REGION=ap-south-1
               '';
             };
