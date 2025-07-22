@@ -51,6 +51,7 @@
         pkgs.jsonnet-bundler
         pkgs.kubecolor
         pkgs.kubectx
+        pkgs.curlie
       ];
       homebrew = {
         enable = true;
@@ -111,9 +112,9 @@
                 grep = "rg";
                 nu = "sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
                 # Package update aliases
-                nix-update = "nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
+                nix-update = "sudo nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
                 brew-update = "brew update && brew upgrade && brew cleanup";
-                system-update = "echo 'Updating Homebrew...' && brew update && brew upgrade && brew cleanup && echo 'Updating Nix packages...' && nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin' && echo 'All updates complete!'";
+                system-update = "echo 'Updating Homebrew...' && brew update && brew upgrade && brew cleanup && echo 'Updating Nix packages...' && sudo nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin' && echo 'All updates complete!'";
                 g = "git";
                 ga = "git add";
                 gd = "git diff";
@@ -121,6 +122,7 @@
                 gc = "git commit -m";
                 gpu = "git push";
                 gp = "git pull";
+                curl = "curlie";
                 k = "kubecolor";
                 kubectl = "kubecolor";
                 kd = "kubecolor diff -f";
