@@ -52,6 +52,7 @@
         pkgs.kubecolor
         pkgs.kubectx
         pkgs.curlie
+        pkgs.dive
       ];
       homebrew = {
         enable = true;
@@ -139,7 +140,10 @@
                 orbstack = "open -a OrbStack";
                 raycast = "open -a Raycast";
                 clipy = "open -a Clipy";
-                code = "open -a Windsurf"; # Note: Windsurf may not be correct; replace with actual app name (e.g., "Visual Studio Code")
+                code = "open -a Windsurf";
+                dcl = "docker container ls -a";
+                dil = "docker image ls -a";
+                doc = "docker";
               };
               initContent = ''
                 # ============================================================================
@@ -155,6 +159,19 @@
                 
                 # Enable Homebrew environment
                 eval "$(/opt/homebrew/bin/brew shellenv)"
+                
+                # ----------------------------------------------------------------------------
+                # Key Bindings Configuration
+                # ----------------------------------------------------------------------------
+                
+                # Enable emacs-style key bindings (required for custom bindings)
+                bindkey -e
+                
+                # Word navigation (Option + Arrow keys)
+                bindkey "^[^[[C" forward-word        # Option + Right Arrow
+                bindkey "^[^[[D" backward-word       # Option + Left Arrow
+                bindkey "^[[1;3C" forward-word       # Option + Right Arrow (alternative)
+                bindkey "^[[1;3D" backward-word      # Option + Left Arrow (alternative)
                 
                 # Load persistent AWS profile if exists
                 if [[ -f ~/.awsp && -s ~/.awsp ]]; then
@@ -300,6 +317,17 @@
                   echo "Usage: kgp [namespace] [pod-name-pattern]"
                   return 1
                 fi
+              }
+              
+              # dec - docker exec container
+              # Usage: dec <container_name>
+              function dec() {
+                if [ $# -ne 1 ]; then
+                  echo "Usage: dec <container_name>"
+                  return 1
+                fi
+                # Single exec with shell fallback logic
+                docker exec -it "$1" sh -c 'exec /bin/bash 2>/dev/null || exec /bin/sh 2>/dev/null || exec bash 2>/dev/null || exec sh 2>/dev/null || (echo "No shell found"; exit 1)'
               }
             '';
             # Configure bat

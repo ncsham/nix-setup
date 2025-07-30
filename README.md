@@ -36,6 +36,8 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 - [Kubernetes Helper Functions](#kubernetes-helper-functions)
   - [Available Functions](#available-functions)
   - [Shell Features](#shell-features)
+- [Docker Helper Functions](#docker-helper-functions)
+- [Terminal Key Bindings](#terminal-key-bindings)
 - [Included Packages](#included-packages)
   - [Development Tools](#development-tools)
   - [Cloud & Infrastructure](#cloud--infrastructure)
@@ -241,12 +243,46 @@ ktx staging                  # Switch to staging context
   kgp default my-app         # Get pods containing 'my-app' in 'default' namespace
   ```
 
+---
+
+## Docker Helper Functions
+
+This configuration includes convenient Docker aliases and functions for container management.
+
+### Docker Aliases
+
+- **doc**: Short alias for `docker`
+- **dcl**: List all Docker containers (`docker container ls -a`)
+- **dil**: List all Docker images (`docker image ls -a`)
+
+**Usage Examples:**
+```bash
+doc ps                      # Same as docker ps
+dcl                         # List all containers (running and stopped)
+dil                         # List all images
+```
+
 ### Shell Features
 
 - **Kube-PS1**: Current Kubernetes context and namespace displayed in prompt
 - **kubectl/helm completions**: Tab completion for kubectl and helm commands
 - **fzf integration**: Enhanced history search with Ctrl+R
 - **Enhanced history**: 100k command history with sharing between sessions
+
+---
+
+## Terminal Key Bindings
+
+This configuration includes editor-like key bindings for improved terminal navigation.
+
+### Word Navigation
+- **Option + Right Arrow**: Jump to next word
+- **Option + Left Arrow**: Jump to previous word
+
+### Word Deletion
+- **Ctrl + W**: Delete previous word (standard zsh behavior)
+
+**Note:** These key bindings work across all terminal applications (iTerm2, Alacritty, Terminal.app, etc.) and provide a consistent editor-like experience.
 
 ---
 
@@ -264,16 +300,17 @@ ktx staging                  # Switch to staging context
 
 ### Kubernetes & Container Tools
 - **Core**: `kubectl`, `kubernetes-helm`, `minikube`
-- **Management**: `kops`
-- **Container**: `docker-compose`
+- **Management**: `kops`, `k9s`, `kubectx`, `stern`
+- **Container**: `docker-compose`, `dive` (Docker image analyzer)
+- **Utilities**: `kubecolor` (colorized kubectl output)
 
 ### System Utilities
-- **File Management**: `bat`, `eza`, `tree`, `rsync`, `ncdu`
+- **File Management**: `bat`, `eza`, `tree`, `rsync`, `ncdu`, `dust` (disk usage analyzer)
 - **Search**: `fzf`, `ripgrep`
-- **System Monitoring**: `htop`, `prometheus`
+- **System Monitoring**: `htop`, `prometheus`, `neofetch`
 - **Terminal**: `tmux`
-- **Data Processing**: `jq`, `yq-go`
-- **Network**: `wget`
+- **Data Processing**: `jq`, `yq-go`, `jsonnet`, `jsonnet-bundler`
+- **Network**: `wget`, `curlie` (modern curl alternative)
 - **Database**: `mycli`, `postgresql`
 
 ### Homebrew Packages
