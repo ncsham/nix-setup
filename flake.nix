@@ -41,7 +41,6 @@
         pkgs.ncdu
         pkgs.postgresql
         pkgs.minikube
-        pkgs.k9s
         pkgs.kubectx
         pkgs.stern
         pkgs.dive
@@ -53,6 +52,8 @@
         pkgs.kubectx
         pkgs.curlie
         pkgs.dive
+        pkgs.sops
+        pkgs.packer
       ];
       homebrew = {
         enable = true;
@@ -144,6 +145,7 @@
                 dcl = "docker container ls -a";
                 dil = "docker image ls -a";
                 doc = "docker";
+                tf = "terraform";
               };
               initContent = ''
                 # ============================================================================
@@ -328,6 +330,38 @@
                 fi
                 # Single exec with shell fallback logic
                 docker exec -it "$1" sh -c 'exec /bin/bash 2>/dev/null || exec /bin/sh 2>/dev/null || exec bash 2>/dev/null || exec sh 2>/dev/null || (echo "No shell found"; exit 1)'
+              }
+              
+              # dps - docker ps with better formatting
+              function dps() {
+                docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+              }
+              
+              # dclean - clean up docker resources
+              function dclean() {
+                echo "Cleaning up Docker resources..."
+                docker system prune -f
+                docker volume prune -f
+                docker network prune -f
+                echo "Docker cleanup complete!"
+              }
+              
+              # dlf - follow logs with timestamp
+              function dlf() {
+                if [ $# -eq 0 ]; then
+                  echo "Usage: dlf <container_name_or_id>"
+                  return 1
+                fi
+                docker logs -f --timestamps "$1"
+              }
+
+              # pck - check if port is open
+              function pck() {
+                if [ $# -ne 2 ]; then
+                  echo "Usage: pck <host> <port>"
+                  return 1
+                fi
+                nc -zv "$1" "$2"
               }
             '';
             # Configure bat
