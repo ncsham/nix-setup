@@ -60,7 +60,7 @@
         onActivation.cleanup = "uninstall";
         taps = ["dimentium/autoraise"];
         brews = ["tfenv" "kube-ps1" "node@24"];
-        casks = ["lens" "postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle"];
+        casks = ["postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle"];
       };
       nix.settings.experimental-features = "nix-command flakes";
       nixpkgs.config.allowUnfree = true;
@@ -97,12 +97,12 @@
                 pmodules = [
                   "environment"
                   "terminal"
-                  "completion"
                   "directory"
+                  "utility"
+                  "completion"
+                  "osx"
                   "syntax-highlighting"
                   "autosuggestions"
-                  "osx"
-                  "utility"
                   "prompt"
                 ];
               };
