@@ -54,6 +54,8 @@
         pkgs.dive
         pkgs.sops
         pkgs.packer
+        pkgs.stern
+        pkgs.shfmt
       ];
       homebrew = {
         enable = true;
