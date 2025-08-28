@@ -13,8 +13,7 @@
   let
     configuration = { pkgs, ... }: {
       environment.systemPackages = [
-        pkgs.neofetch
-        pkgs.neovim
+        pkgs.fastfetch
         pkgs.git
         pkgs.htop
         pkgs.tmux
@@ -56,6 +55,24 @@
         pkgs.packer
         pkgs.stern
         pkgs.shfmt
+        pkgs.envsubst
+        pkgs.gojsontoyaml
+        pkgs.stirling-pdf
+        
+        # Language servers for Neovim
+        pkgs.pyright                       # Python
+        pkgs.gopls                         # Go
+        pkgs.bash-language-server          # Bash
+        pkgs.lua-language-server           # Lua
+        pkgs.yaml-language-server          # YAML
+        pkgs.vscode-langservers-extracted  # JSON, HTML, CSS
+        
+        # Formatters and linters
+        pkgs.black                         # Python formatter
+        pkgs.gofumpt                       # Go formatter
+        pkgs.shellcheck                    # Shell script linter
+        pkgs.stylua                        # Lua formatter
+        pkgs.nodePackages.prettier         # General formatter
       ];
       homebrew = {
         enable = true;
@@ -88,6 +105,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.users.nitheeshchandrashamanthu = { pkgs, ... }: {
+            imports = [ ./nvim.nix ];
             home.homeDirectory = "/Users/nitheeshchandrashamanthu";
             home.username = "nitheeshchandrashamanthu";
             home.stateVersion = "24.05";
@@ -148,6 +166,7 @@
                 dil = "docker image ls -a";
                 doc = "docker";
                 tf = "terraform";
+                spdf = "stirling-pdf";
               };
               initContent = ''
                 # ============================================================================
