@@ -53,11 +53,11 @@
         pkgs.dive
         pkgs.sops
         pkgs.packer
-        pkgs.stern
         pkgs.shfmt
         pkgs.envsubst
         pkgs.gojsontoyaml
-        pkgs.stirling-pdf
+        pkgs.pwgen
+        pkgs.cassandra
         
         # Language servers for Neovim
         pkgs.pyright                       # Python
@@ -166,7 +166,6 @@
                 dil = "docker image ls -a";
                 doc = "docker";
                 tf = "terraform";
-                spdf = "stirling-pdf";
               };
               initContent = ''
                 # ============================================================================
