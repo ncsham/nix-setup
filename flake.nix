@@ -11,6 +11,7 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
   let
+    currentUser = "nitheeshchandrashamanthu";
     configuration = { pkgs, ... }: {
       environment.systemPackages = [
         pkgs.fastfetch
@@ -88,12 +89,12 @@
       system.configurationRevision = self.rev or self.dirtyRev or null;
       security.pam.services.sudo_local.touchIdAuth = true;
       system.stateVersion = 6;
-      system.primaryUser = "nitheeshchandrashamanthu";
+      system.primaryUser = currentUser;
       nixpkgs.hostPlatform = "aarch64-darwin";
       nix.enable = false;
-      users.users.nitheeshchandrashamanthu = {
-        name = "nitheeshchandrashamanthu";
-        home = "/Users/nitheeshchandrashamanthu";
+      users.users.${currentUser} = {
+        name = currentUser;
+        home = "/Users/${currentUser}";
       };
     };
   in
@@ -105,10 +106,10 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.users.nitheeshchandrashamanthu = { pkgs, ... }: {
+          home-manager.users.${currentUser} = { pkgs, ... }: {
             imports = [ ./nvim.nix ];
-            home.homeDirectory = "/Users/nitheeshchandrashamanthu";
-            home.username = "nitheeshchandrashamanthu";
+            home.homeDirectory = "/Users/${currentUser}";
+            home.username = currentUser;
             home.stateVersion = "24.05";
             programs.zsh = {
               enable = true;
@@ -291,11 +292,7 @@
                 export AWS_DEFAULT_REGION=ap-south-1
               '';
             };
-            home.file.".functions".text = ''
-              function hello() {
-                echo "Hello, $1!"
-              }
-              
+            home.file.".functions".text = ''              
               # Kubectl convenience functions
               # ktp - kubectl tail logs of pods
               # Usage: ktp <namespace> <pod-name>

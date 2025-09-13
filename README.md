@@ -165,7 +165,7 @@ If you already have nix-darwin installed and want to use this configuration:
 
 4. **Review and customize the configuration:**
    - Edit `flake.nix` to adjust usernames, paths, and package selections as needed
-   - The configuration uses `nitheeshchandrashamanthu` as the username - change this to your username
+   - Update the `currentUser` variable on line 14 to match your username
 
 5. **Apply the new configuration:**
    ```bash
@@ -740,7 +740,7 @@ vi    # Also opens Neovim
 
 - **Add or remove packages**: Edit the `environment.systemPackages` list in `flake.nix`.
 - **Enable/disable Homebrew casks**: Edit the `homebrew.casks` list.
-- **User settings**: Adjust the `users.users.<username>` and `system.primaryUser` fields.
+- **Change username**: Update the `currentUser` variable on line 14 of `flake.nix` to match your system username.
 
 ---
 
