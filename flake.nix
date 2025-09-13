@@ -58,6 +58,7 @@
         pkgs.gojsontoyaml
         pkgs.pwgen
         pkgs.cassandra
+        pkgs.kafkactl
         
         # Language servers for Neovim
         pkgs.pyright                       # Python
@@ -166,6 +167,7 @@
                 dil = "docker image ls -a";
                 doc = "docker";
                 tf = "terraform";
+                kctl = "kafkactl";
               };
               initContent = ''
                 # ============================================================================
