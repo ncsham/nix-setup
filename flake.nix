@@ -41,7 +41,7 @@
         pkgs.ncdu
         pkgs.postgresql
         pkgs.minikube
-        pkgs.kubectx
+        pkgs.kubie
         pkgs.stern
         pkgs.dive
         pkgs.dust
@@ -49,7 +49,6 @@
         pkgs.jsonnet
         pkgs.jsonnet-bundler
         pkgs.kubecolor
-        pkgs.kubectx
         pkgs.curlie
         pkgs.dive
         pkgs.sops
@@ -202,8 +201,8 @@
                 ka = "kubecolor apply -f";
                 ssp = "cp ~/.ssh/config_personal ~/.ssh/config";
                 ssw = "cp ~/.ssh/config_work ~/.ssh/config";
-                ktx = "kubectx";
-                kns = "kubens";
+                ktx = "kubie ctx";
+                kns = "kubie ns";
                 awsp = "source _awsp";
                 lens = "open -a Lens";
                 arc = "open -a Arc";
