@@ -11,7 +11,7 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 - **Home-Manager**: Manage user-level packages and dotfiles declaratively.
 - **Comprehensive Package Set**: Includes development tools (`go`, `python3`, `awscli`, `opentofu`), Kubernetes tools (`kubectl`, `helm`, `minikube`, `kops`), system utilities (`bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`), and more.
 - **Kubernetes Integration**: Pre-configured with kubectl/helm completions and custom Kubernetes helper functions.
-- **Enhanced Shell Experience**: ZSH configuration with fzf integration, history management, and custom prompt with kube-ps1.
+- **Enhanced Shell Experience**: ZSH configuration with oh-my-posh prompt, fzf integration, history management, and comprehensive shell options.
 - **Homebrew Support**: GUI apps and additional tools via Homebrew (Lens, Postman, Raycast, etc.).
 - **Apple Silicon Ready**: Configured for `aarch64-darwin` (Apple Silicon/M1/M2).
 
@@ -45,6 +45,7 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 - [Docker Helper Functions](#docker-helper-functions)
 - [PDF Processing](#pdf-processing)
 - [Terminal Key Bindings](#terminal-key-bindings)
+- [Oh-My-Posh Prompt](#oh-my-posh-prompt)
 - [Neovim Editor](#neovim-editor)
   - [Key Features](#key-features)
   - [Important Keybindings](#important-keybindings)
@@ -560,12 +561,16 @@ spdf                        # Start Stirling PDF web server
 
 ### Shell Features
 
-- **Kube-PS1**: Current Kubernetes context and namespace displayed in prompt
-- **AWS Profile Display**: Current AWS profile shown in prompt (☁|profile-name)
+- **Oh-My-Posh Prompt**: Beautiful custom prompt with time, Kubernetes context, AWS profile, and command status
+- **Kubernetes Context**: Current context and namespace displayed in prompt (⎈ |context:namespace)
+- **AWS Profile Display**: Current AWS profile shown in prompt (☁ |profile-name) - hidden when default
+- **Time Display**: Current time with seconds (-HH:MM:SS-) in light purple
+- **Command Status**: Green checkmark (✓) for success, red X with code (✗ N) for failures
 - **kubectl/helm completions**: Tab completion for kubectl and helm commands (loaded asynchronously for performance)
 - **fzf integration**: Enhanced history search with Ctrl+R
 - **Enhanced history**: 100k command history with sharing between sessions
 - **Performance optimized**: Lazy-loading completions and cached context checks for fast shell startup
+- **Zsh Options**: Auto-cd, command correction, intelligent history, and extended globbing
 
 ---
 
@@ -613,14 +618,49 @@ This configuration includes editor-like key bindings for improved terminal navig
 
 ---
 
+## Oh-My-Posh Prompt
+
+This configuration uses Oh-My-Posh for a beautiful, informative command prompt with real-time status indicators.
+
+![Command Prompt Screenshot](https://github.com/user-attachments/assets/your-screenshot-url)
+
+### Prompt Layout
+
+The prompt displays information in this format:
+```
+.-(~/navi)--------------------------------------------------------------------------(⎈ |spike.np.navi-tech.in:sentinelone)-14:30:20-(✓)
+`--> 
+```
+
+### Prompt Components
+
+- **Path Display**: Current directory in green with light purple brackets `.-(/path/to/directory)`
+- **Kubernetes Context**: Shows current context and namespace `(⎈ |context:namespace)` in blue
+- **AWS Profile**: Shows active AWS profile `(☁ |profile-name)` in orange (hidden when default)
+- **Time**: Current time with seconds `-HH:MM:SS-` in light purple
+- **Command Status**: 
+  - Green checkmark `(✓)` for successful commands
+  - Red X with exit code `(✗ N)` for failed commands
+- **Input Line**: Light purple arrow prompt `\`--> ` for command input
+
+### Color Scheme
+
+- **Light Purple** (`#dda0dd`): Structural elements (dashes, brackets, arrows)
+- **Green** (`#00ff00`): Path text and success indicators
+- **Blue** (`#00bfff`): Kubernetes context information
+- **Orange** (`#ffcc66`): AWS profile information
+- **Red** (`#ff6b6b`): Error indicators
+
+---
+
 ## Neovim Editor
 
 A comprehensive Neovim configuration is included with language servers, modern plugins, and an intuitive setup.
 
 ### Key Features
 
-- **Theme**: Gruvbox dark theme for comfortable coding
-- **Status Bar**: Lualine with git integration and diagnostics
+- **Theme**: Tokyo Night dark theme with night style (darkest variant)
+- **Status Bar**: Lualine with Tokyo Night theme, git integration and diagnostics
 - **File Explorer**: NvimTree with git status indicators
 - **Fuzzy Finder**: Telescope for fast file/content searching
 - **Syntax Highlighting**: Treesitter with support for many languages
@@ -764,4 +804,4 @@ MIT
 
 ---
 
-*Last updated on 2025-08-28. For questions or improvements, please open an issue or PR.*
+*Last updated on 2025-09-14. For questions or improvements, please open an issue or PR.*
