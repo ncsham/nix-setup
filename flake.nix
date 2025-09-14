@@ -60,6 +60,9 @@
         pkgs.pwgen
         pkgs.cassandra
         pkgs.kafkactl
+        pkgs.oh-my-posh
+        pkgs.zsh-syntax-highlighting
+        pkgs.zsh-autosuggestions
         
         # Language servers for Neovim
         pkgs.pyright                       # Python
@@ -113,21 +116,6 @@
             home.stateVersion = "24.05";
             programs.zsh = {
               enable = true;
-              prezto = {
-                enable = true;
-                prompt.theme = "adam2";
-                pmodules = [
-                  "environment"
-                  "terminal"
-                  "directory"
-                  "utility"
-                  "completion"
-                  "osx"
-                  "syntax-highlighting"
-                  "autosuggestions"
-                  "prompt"
-                ];
-              };
               shellAliases = {
                 vim = "nvim";
                 ls = "eza";
@@ -175,6 +163,29 @@
                 # SHELL INITIALIZATION CONFIGURATION
                 # ============================================================================
                 
+                # Zsh options (previously from prezto)
+                setopt AUTO_CD                    # Change directory by typing directory name
+                setopt CORRECT                    # Correct commands
+                setopt CORRECT_ALL                # Correct all arguments
+                setopt HIST_IGNORE_DUPS           # Ignore duplicate commands in history
+                setopt HIST_IGNORE_ALL_DUPS       # Remove older duplicate entries from history
+                setopt HIST_REDUCE_BLANKS         # Remove superfluous blanks from history items
+                setopt HIST_SAVE_NO_DUPS          # Don't save duplicate entries to history file
+                setopt HIST_VERIFY                # Show command with history expansion to user before running
+                setopt SHARE_HISTORY              # Share history between all sessions
+                setopt EXTENDED_HISTORY           # Write the history file in the ':start:elapsed;command' format
+                setopt APPEND_HISTORY             # Append history to the history file (no overwriting)
+                setopt INC_APPEND_HISTORY         # Write to the history file immediately, not when the shell exits
+                setopt AUTO_PUSHD                 # Push the current directory visited on the stack
+                setopt PUSHD_IGNORE_DUPS          # Do not store duplicates in the stack
+                setopt PUSHD_SILENT               # Do not print the directory stack after pushd or popd
+                setopt GLOB_DOTS                  # Include dotfiles in globbing
+                setopt EXTENDED_GLOB              # Use extended globbing syntax
+                setopt NO_BEEP                    # Disable beeping
+                setopt INTERACTIVE_COMMENTS       # Allow comments in interactive shell
+                setopt MULTIOS                    # Perform implicit tees or cats when multiple redirections are attempted
+                setopt PROMPT_SUBST               # Enable parameter expansion, command substitution, and arithmetic expansion in prompts
+                
                 # ----------------------------------------------------------------------------
                 # Basic Environment Setup
                 # ----------------------------------------------------------------------------
@@ -184,6 +195,13 @@
                 
                 # Enable Homebrew environment
                 eval "$(/opt/homebrew/bin/brew shellenv)"
+
+                # Enable oh-my-posh with custom theme
+                eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/custom.json)"
+                
+                # Enable zsh plugins
+                source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+                source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
                 
                 # ----------------------------------------------------------------------------
                 # Key Bindings Configuration
@@ -202,51 +220,6 @@
                 if [[ -f ~/.awsp && -s ~/.awsp ]]; then
                   export AWS_PROFILE=$(cat ~/.awsp)
                 fi
-                
-                # ----------------------------------------------------------------------------
-                # Prompt Configuration
-                # ----------------------------------------------------------------------------
-                
-                # Source kube-ps1 for Kubernetes context in prompt
-                source /opt/homebrew/opt/kube-ps1/share/kube-ps1.sh
-                
-                # Customize kube-ps1 settings
-                KUBE_PS1_SYMBOL_ENABLE=true
-                KUBE_PS1_PREFIX='('
-                KUBE_PS1_SUFFIX=')'
-                
-                # Set prezto theme
-                zstyle ':prezto:module:prompt' theme 'adam2'
-                
-                # Use prezto's precmd hook to add custom prompt elements
-                autoload -Uz add-zsh-hook
-                
-                # AWS Profile display function (similar to kube-ps1)
-                aws_ps1() {
-                  if [[ -n "$AWS_PROFILE" ]]; then
-                    echo "(%{$fg[green]%}☁|$AWS_PROFILE%{$reset_color%})"
-                  fi
-                }
-                
-                # Store original RPROMPT to avoid accumulation
-                _original_rprompt="$RPROMPT"
-                
-                # Custom prompt update function
-                _kube_aws_ps1_update_prompt() {
-                  # Reset to original RPROMPT first
-                  RPROMPT="$_original_rprompt"
-                  
-                  # Direct kubectl context check for real-time accuracy
-                  if kubectl config current-context &>/dev/null; then
-                    RPROMPT="$(kube_ps1)$(aws_ps1)$RPROMPT"
-                  else
-                    # If no k8s context, just show AWS profile
-                    RPROMPT="$(aws_ps1)$RPROMPT"
-                  fi
-                }
-                
-                # Hook the prompt update function
-                add-zsh-hook precmd _kube_aws_ps1_update_prompt
                 
                 # ----------------------------------------------------------------------------
                 # Async Completion Loading (Performance Optimization)
@@ -401,6 +374,77 @@
                 AddKeysToAgent yes
                 UseKeychain yes
                 IdentityFile ~/.ssh/id_ed25519
+            '';
+            # Oh My Posh theme configuration
+            home.file.".config/oh-my-posh/custom.json".text = ''
+              {
+                "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+                "version": 2,
+                "blocks": [
+                  {
+                    "alignment": "left",
+                    "segments": [
+                      {
+                        "type": "path",
+                        "style": "plain",
+                        "foreground": "#ffff00",
+                        "template": "<#dda0dd>.-(</#dda0dd><#00ff00>{{ .Path }}</><#dda0dd>)</>"
+                      }
+                    ],
+                    "type": "prompt"
+                  },
+                  {
+                    "alignment": "right",
+                    "filler": "<#dda0dd>-</>",
+                    "segments": [
+                      {
+                        "type": "kubectl",
+                        "style": "plain",
+                        "foreground": "#00bfff",
+                        "template": "<#00bfff>(⎈ |{{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }})</>"
+                      },
+                      {
+                        "type": "aws",
+                        "style": "plain",
+                        "foreground": "#ffcc66",
+                        "template": "<#ffcc66>(☁ |{{ .Profile }})</>",
+                        "properties": {
+                          "display_default": false
+                        }
+                      },
+                      {
+                        "type": "time",
+                        "style": "plain",
+                        "foreground": "#dda0dd",
+                        "template": "<#dda0dd>-{{ .CurrentDate | date \"15:04:05\" }}-</>"
+                      },
+                      {
+                        "type": "status",
+                        "style": "plain",
+                        "foreground_templates": [
+                          "{{ if gt .Code 0 }}#ff6b6b{{ end }}",
+                          "{{ if eq .Code 0 }}#51fa7a{{ end }}"
+                        ],
+                        "template": "{{ if gt .Code 0 }}<#ff6b6b>(✗ {{ .Code }})</>{{ else }}<#51fa7a>(✓)</>{{ end }}"
+                      }
+                    ],
+                    "type": "prompt"
+                  },
+                  {
+                    "alignment": "left",
+                    "newline": true,
+                    "segments": [
+                      {
+                        "type": "text",
+                        "style": "plain",
+                        "foreground": "#dda0dd",
+                        "template": "`--> "
+                      }
+                    ],
+                    "type": "prompt"
+                  }
+                ]
+              }
             '';
           };
         }
