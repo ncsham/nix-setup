@@ -380,6 +380,27 @@
               {
                 "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
                 "version": 2,
+                "tooltips_action": "extend",
+                "tooltips": [
+                  {
+                    "type": "git",
+                    "tips": ["git", "g"],
+                    "style": "plain",
+                    "foreground": "#f8bbd9",
+                    "template": " {{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}",
+                    "properties": {
+                      "fetch_status": true,
+                      "fetch_upstream_icon": true
+                    }
+                  },
+                  {
+                    "type": "aws",
+                    "tips": ["aws", "terraform", "tf"],
+                    "style": "plain",
+                    "foreground": "#ffcc66",
+                    "template": " {{.Profile}}{{if .Region}}@{{.Region}}{{end}}"
+                  }
+                ],
                 "blocks": [
                   {
                     "alignment": "left",
@@ -388,7 +409,10 @@
                         "type": "path",
                         "style": "plain",
                         "foreground": "#ffff00",
-                        "template": "<#dda0dd>.-(</#dda0dd><#00ff00>{{ .Path }}</><#dda0dd>)</>"
+                        "template": "<#dda0dd>.-(</#dda0dd><#00ff00>{{ .Path }}</><#dda0dd>)</>",
+                        "properties": {
+                          "style": "agnoster_full"
+                        }
                       }
                     ],
                     "type": "prompt"
@@ -404,12 +428,13 @@
                         "template": "<#00bfff>(⎈ |{{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }})</>"
                       },
                       {
-                        "type": "aws",
+                        "type": "executiontime",
                         "style": "plain",
-                        "foreground": "#ffcc66",
-                        "template": "<#ffcc66>(☁ |{{ .Profile }})</>",
+                        "foreground": "#87ceeb",
+                        "template": "<#87ceeb>-{{ .FormattedMs }}</>",
                         "properties": {
-                          "display_default": false
+                          "threshold": 1,
+                          "style": "austin"
                         }
                       },
                       {
@@ -417,15 +442,6 @@
                         "style": "plain",
                         "foreground": "#dda0dd",
                         "template": "<#dda0dd>-{{ .CurrentDate | date \"15:04:05\" }}-</>"
-                      },
-                      {
-                        "type": "status",
-                        "style": "plain",
-                        "foreground_templates": [
-                          "{{ if gt .Code 0 }}#ff6b6b{{ end }}",
-                          "{{ if eq .Code 0 }}#51fa7a{{ end }}"
-                        ],
-                        "template": "{{ if gt .Code 0 }}<#ff6b6b>(✗ {{ .Code }})</>{{ else }}<#51fa7a>(✓)</>{{ end }}"
                       }
                     ],
                     "type": "prompt"
