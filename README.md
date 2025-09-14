@@ -11,7 +11,7 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 - **Home-Manager**: Manage user-level packages and dotfiles declaratively.
 - **Comprehensive Package Set**: Includes development tools (`go`, `python3`, `awscli`, `opentofu`), Kubernetes tools (`kubectl`, `helm`, `minikube`, `kops`), system utilities (`bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`), and more.
 - **Kubernetes Integration**: Pre-configured with kubectl/helm completions and custom Kubernetes helper functions.
-- **Enhanced Shell Experience**: ZSH configuration with oh-my-posh prompt, fzf integration, history management, and comprehensive shell options.
+- **Ultimate Oh-My-Posh Experience**: Meticulously crafted prompt with smart tooltips, performance monitoring, and context-aware DevOps information display.
 - **Homebrew Support**: GUI apps and additional tools via Homebrew (Lens, Postman, Raycast, etc.).
 - **Apple Silicon Ready**: Configured for `aarch64-darwin` (Apple Silicon/M1/M2).
 
@@ -561,11 +561,14 @@ spdf                        # Start Stirling PDF web server
 
 ### Shell Features
 
-- **Oh-My-Posh Prompt**: Beautiful custom prompt with time, Kubernetes context, AWS profile, and command status
-- **Kubernetes Context**: Current context and namespace displayed in prompt (⎈ |context:namespace)
-- **AWS Profile Display**: Current AWS profile shown in prompt (☁ |profile-name) - hidden when default
-- **Time Display**: Current time with seconds (-HH:MM:SS-) in light purple
-- **Command Status**: Green checkmark (✓) for success, red X with code (✗ N) for failures
+- **Ultimate Oh-My-Posh Prompt**: Revolutionary command line experience with intelligent tooltips and performance monitoring
+- **Smart Tooltips**: Git repository status appears when typing `git ` or `g `, AWS profile@region when typing `aws `, `terraform `, or `tf `
+- **Full Path Display**: Complete directory visibility with `agnoster_full` style - no truncation
+- **Kubernetes Safety**: Red ⎈ symbol with blue context text for cluster awareness
+- **Performance Tracking**: Execution time display for commands >1ms in sky blue
+- **Precise Timing**: 24-hour format with seconds for operation logging
+- **Color Harmony**: Sophisticated purple/green/blue/pink palette optimized for readability
+- **DevOps Optimized**: Perfect for kubectl, terraform, git, and AWS CLI workflows
 - **kubectl/helm completions**: Tab completion for kubectl and helm commands (loaded asynchronously for performance)
 - **fzf integration**: Enhanced history search with Ctrl+R
 - **Enhanced history**: 100k command history with sharing between sessions
@@ -618,38 +621,335 @@ This configuration includes editor-like key bindings for improved terminal navig
 
 ---
 
-## Oh-My-Posh Prompt
+## Oh-My-Posh Prompt - The Ultimate DevOps Command Line Experience
 
-This configuration uses Oh-My-Posh for a beautiful, informative command prompt with real-time status indicators.
+This configuration features a meticulously crafted Oh-My-Posh setup that provides the perfect balance of information density, visual clarity, and performance optimization for DevOps workflows.
 
 ![Command Prompt Screenshot](https://github.com/user-attachments/assets/your-screenshot-url)
 
-### Prompt Layout
+### 🎆 Main Prompt Layout
 
-The prompt displays information in this format:
+The main prompt displays essential information in an elegant, dash-separated format:
 ```
-.-(~/navi)--------------------------------------------------------------------------(⎈ |spike.np.navi-tech.in:sentinelone)-14:30:20-(✓)
+.-(~/very/long/path/to/project)----------(⎈ |spike.np.navi-tech.in:sentinelone)-2.1s--21:08:43-
 `--> 
 ```
 
-### Prompt Components
+### 📊 Core Components
 
-- **Path Display**: Current directory in green with light purple brackets `.-(/path/to/directory)`
-- **Kubernetes Context**: Shows current context and namespace `(⎈ |context:namespace)` in blue
-- **AWS Profile**: Shows active AWS profile `(☁ |profile-name)` in orange (hidden when default)
-- **Time**: Current time with seconds `-HH:MM:SS-` in light purple
-- **Command Status**: 
-  - Green checkmark `(✓)` for successful commands
-  - Red X with exit code `(✗ N)` for failed commands
-- **Input Line**: Light purple arrow prompt `\`--> ` for command input
+#### **Path Display** 📁
+- **Full Path**: Uses `agnoster_full` style - no truncation, complete directory visibility
+- **Format**: `.-(/complete/path/to/directory)`
+- **Colors**: Light purple brackets (`#dda0dd`), bright green path text (`#00ff00`)
+- **DevOps Benefit**: Always know exactly where you are for deployments and configurations
 
-### Color Scheme
+#### **Kubernetes Context** ⎈
+- **Format**: `(⎈ |context:namespace)`
+- **Colors**: Red helm symbol (`#ff6b6b`), blue context text (`#00bfff`)
+- **Smart Display**: Shows current cluster and namespace for safe operations
+- **Safety**: Red symbol draws attention to prevent wrong-cluster deployments
 
-- **Light Purple** (`#dda0dd`): Structural elements (dashes, brackets, arrows)
-- **Green** (`#00ff00`): Path text and success indicators
-- **Blue** (`#00bfff`): Kubernetes context information
-- **Orange** (`#ffcc66`): AWS profile information
-- **Red** (`#ff6b6b`): Error indicators
+#### **Execution Time** ⏱️
+- **Format**: `-2.1s-` or `-500ms-`
+- **Color**: Sky blue (`#87ceeb`)
+- **Threshold**: Shows for commands taking >1ms
+- **DevOps Benefit**: Monitor performance of kubectl, terraform, and deployment scripts
+
+#### **Time Display** 🕰️
+- **Format**: `-HH:MM:SS-` (24-hour with seconds)
+- **Color**: Light purple (`#dda0dd`)
+- **Purpose**: Track when operations completed for logging and debugging
+
+#### **Input Prompt** ➡️
+- **Format**: `\`--> `
+- **Color**: Light purple (`#dda0dd`)
+- **Clean**: Minimal, consistent with theme
+
+### 💫 Smart Tooltips System
+
+Intelligent context-aware information that appears only when needed:
+
+#### **Git Repository Tooltips** 🔀
+**Triggers**: Type `git ` or `g ` (with space)
+```
+.-(~/project)----------(⎈ |k8s)-1.2s--21:08:43-      main  3 |  2
+`--> git 
+```
+- **Branch Info**: Current branch name with git icon
+- **Staging Area**: Files ready to commit with count
+- **Working Changes**: Modified files with count
+- **Color**: Soft pink (`#f8bbd9`) for gentle visibility
+- **Performance**: Non-blocking, fast git status integration
+
+#### **AWS Profile Tooltips** ☁️
+**Triggers**: Type `aws `, `terraform `, or `tf ` (with space)
+```
+.-(~/infrastructure)----------(⎈ |prod-cluster)-3.4s--21:08:43-     ☁️ production@us-east-1
+`--> terraform 
+```
+- **Profile & Region**: Shows active AWS profile and region
+- **Multi-trigger**: Works with AWS CLI, Terraform, and tf alias
+- **Color**: Orange (`#ffcc66`) matching AWS branding
+- **Safety**: Verify environment before infrastructure changes
+
+### 🎨 Sophisticated Color Palette
+
+| Element | Color | Hex Code | Purpose |
+|---------|-------|----------|----------|
+| **Structure** | Light Purple | `#dda0dd` | Dashes, brackets, arrows - visual framework |
+| **Path** | Bright Green | `#00ff00` | Directory location - high visibility |
+| **Kubernetes** | Blue/Red | `#00bfff`/`#ff6b6b` | Context info with attention-grabbing symbol |
+| **Execution Time** | Sky Blue | `#87ceeb` | Performance metrics - calm but noticeable |
+| **Time** | Light Purple | `#dda0dd` | Timestamp - integrated with structure |
+| **Git Tooltips** | Soft Pink | `#f8bbd9` | Repository status - gentle information |
+| **AWS Tooltips** | Orange | `#ffcc66` | Cloud context - warm, AWS-themed |
+
+### ⚡ Performance Optimizations
+
+- **Execution Time**: 1ms threshold prevents noise from instant commands
+- **Tooltip Mode**: `extend` - adds to prompt without replacing existing content
+- **Git Status**: Cached and optimized for repository information
+- **AWS Context**: Lightweight profile and region detection
+- **Lazy Loading**: Tooltips appear only when command-specific triggers are used
+
+### 🚀 DevOps Workflow Benefits
+
+1. **Context Awareness**: Always know your cluster, namespace, AWS profile, and directory
+2. **Performance Monitoring**: Track command execution times for optimization
+3. **Safety Features**: Red Kubernetes symbol and AWS tooltips prevent wrong-environment operations
+4. **Efficiency**: Full path display eliminates guesswork about current location
+5. **Git Integration**: Instant repository status without running separate commands
+6. **Clean Interface**: Information appears only when relevant (tooltips)
+7. **Time Tracking**: Precise timestamps for operation logging
+
+### 📝 Usage Examples
+
+**Normal Operation**:
+```
+.-(~/microservices/api-gateway)----------(⎈ |production:default)-1.2s--21:08:43-
+`--> kubectl get pods
+```
+
+**Git Work with Tooltip**:
+```
+.-(~/microservices/api-gateway)----------(⎈ |dev:feature)-45ms--21:09:15-      feature/auth  2 |  1
+`--> git commit -m "Add authentication"
+```
+
+**Infrastructure Work with AWS Tooltip**:
+```
+.-(~/infrastructure/terraform/prod)----------(⎈ |prod-cluster)-3.4s--21:10:22-     ☁️ production@us-east-1
+`--> terraform apply
+```
+
+### 🔧 Configuration Highlights
+
+- **Tooltip Action**: `extend` - non-intrusive information overlay
+- **Path Style**: `agnoster_full` - complete directory visibility
+- **Execution Threshold**: `1ms` - captures meaningful performance data
+- **Git Properties**: `fetch_status: true`, `fetch_upstream_icon: true`
+- **Multi-trigger Support**: Git (`git`, `g`) and AWS (`aws`, `terraform`, `tf`) commands
+
+### 🔍 Advanced Tooltips Configuration
+
+#### Git Tooltip Deep Dive
+The git tooltip system provides comprehensive repository information:
+
+```json
+{
+  "type": "git",
+  "style": "plain",
+  "foreground": "#f8bbd9",
+  "template": "{{ .HEAD }}{{ if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if .Staging.Changed }} | {{ .Staging.String }}{{ end }}",
+  "properties": {
+    "fetch_status": true,
+    "fetch_upstream_icon": true
+  }
+}
+```
+
+**Template Variables Explained:**
+- `{{ .HEAD }}`: Current branch name with git icon
+- `{{ .BranchStatus }}`: Ahead/behind upstream indicators
+- `{{ .Working.String }}`: Count of modified files in working directory
+- `{{ .Staging.String }}`: Count of files staged for commit
+
+**Trigger Configuration:**
+```json
+"tooltips": [
+  {
+    "tips": [/* git tooltip config */],
+    "command": "git",
+    "param": "git"
+  },
+  {
+    "tips": [/* git tooltip config */],
+    "command": "g",
+    "param": "g"
+  }
+]
+```
+
+#### AWS Tooltip Deep Dive
+The AWS tooltip displays current profile and region:
+
+```json
+{
+  "type": "aws",
+  "style": "plain",
+  "foreground": "#ffcc66",
+  "template": "☁️ {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }}"
+}
+```
+
+**Multi-Command Triggers:**
+- `aws ` - Direct AWS CLI usage
+- `terraform ` - Infrastructure as Code operations
+- `tf ` - Terraform alias for quick commands
+
+### 🎯 Troubleshooting Oh-My-Posh Prompt
+
+#### Common Issues and Solutions
+
+**1. Prompt Not Appearing After Configuration**
+```bash
+# Rebuild and restart shell
+nu  # Rebuild nix-darwin configuration
+exec zsh  # Restart shell session
+```
+
+**2. Tooltips Not Triggering**
+- Ensure you type the command followed by a space
+- Check that oh-my-posh version supports tooltips (v12.0+)
+- Verify JSON syntax in flake.nix configuration
+
+**3. Kubernetes Context Not Showing**
+```bash
+# Check kubectl configuration
+kubectl config current-context
+kubectl config get-contexts
+
+# If no context is set:
+kubectl config use-context <your-context>
+```
+
+**4. AWS Profile Not Displaying in Tooltips**
+```bash
+# Check AWS configuration
+aws configure list
+echo $AWS_PROFILE
+
+# Set profile if needed:
+export AWS_PROFILE=your-profile
+```
+
+**5. Git Status Not Updating**
+```bash
+# Ensure you're in a git repository
+git status
+
+# Check git configuration
+git config --list
+```
+
+**6. Colors Not Displaying Correctly**
+- Verify terminal supports 256 colors or true color
+- Check terminal color scheme compatibility
+- Test with: `oh-my-posh print primary --config ~/.config/oh-my-posh/theme.json`
+
+**7. Performance Issues**
+- Increase execution time threshold in configuration
+- Disable git fetch_status for large repositories
+- Use `oh-my-posh debug` to identify slow segments
+
+#### Debug Commands
+
+```bash
+# Test oh-my-posh configuration
+oh-my-posh print primary --config <(echo '$ohMyPoshConfig' | jq -r '.')
+
+# Debug specific segments
+oh-my-posh debug --config <config-file>
+
+# Check oh-my-posh version
+oh-my-posh version
+
+# Validate JSON configuration
+echo '$ohMyPoshConfig' | jq '.'
+```
+
+### ⚙️ Customizing Your Prompt
+
+#### Adding New Segments
+To add new segments to your prompt, modify the `segments` array in `flake.nix`:
+
+```nix
+# Example: Add Node.js version segment
+{
+  type = "node";
+  style = "plain";
+  foreground = "#3C873A";
+  template = " {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}";
+}
+```
+
+#### Modifying Colors
+Update the `foreground` property for any segment:
+
+```nix
+# Change path color to blue
+{
+  type = "path";
+  style = "agnoster_full";
+  foreground = "#0066cc";  # Changed from #00ff00
+  # ... rest of configuration
+}
+```
+
+#### Adding Custom Tooltips
+Create new tooltip configurations for different commands:
+
+```nix
+# Example: Docker tooltip
+{
+  tips = [
+    {
+      type = "docker";
+      style = "plain";
+      foreground = "#2496ED";
+      template = " {{ .Context }}";
+    }
+  ];
+  command = "docker";
+  param = "docker";
+}
+```
+
+#### Performance Tuning
+
+**Adjust Execution Time Threshold:**
+```nix
+{
+  type = "executiontime";
+  style = "austin";
+  foreground = "#87ceeb";
+  properties = {
+    threshold = 500;  # Changed from 1ms to 500ms
+    style = "austin";
+  };
+}
+```
+
+**Optimize Git Performance:**
+```nix
+{
+  type = "git";
+  properties = {
+    fetch_status = false;      # Disable for large repos
+    fetch_upstream_icon = false;
+  };
+}
+```
 
 ---
 

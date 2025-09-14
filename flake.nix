@@ -64,6 +64,10 @@
         pkgs.zsh-syntax-highlighting
         pkgs.zsh-autosuggestions
         
+        # Enhanced git diff tools
+        pkgs.delta          # Modern diff viewer with syntax highlighting
+        pkgs.difftastic     # Structural diff tool that understands syntax
+        
         # Language servers for Neovim
         pkgs.pyright                       # Python
         pkgs.gopls                         # Go
@@ -114,6 +118,59 @@
             home.homeDirectory = "/Users/${currentUser}";
             home.username = currentUser;
             home.stateVersion = "24.05";
+            programs.git = {
+              enable = true;
+              extraConfig = {
+                core = {
+                  pager = "delta";  # Use delta as pager but configure it properly
+                  editor = "nvim";
+                };
+                interactive = {
+                  diffFilter = "delta --color-only";
+                };
+                delta = {
+                  navigate = true;
+                  light = false;
+                  side-by-side = true;
+                  line-numbers = true;
+                  syntax-theme = "Dracula";
+                };
+                color = {
+                  ui = "auto";
+                  diff = "auto";
+                  status = "auto";
+                  branch = "auto";
+                };
+                diff = {
+                  colorMoved = "default";
+                  algorithm = "patience";
+                };
+                merge = {
+                  conflictstyle = "diff3";
+                };
+                pull = {
+                  rebase = false;
+                };
+                push = {
+                  default = "simple";
+                  autoSetupRemote = true;
+                };
+                init = {
+                  defaultBranch = "main";
+                };
+                alias = {
+                  st = "status";
+                  co = "checkout";
+                  br = "branch";
+                  ci = "commit";
+                  df = "diff";
+                  lg = "log --oneline --graph --decorate --all";
+                  last = "log -1 HEAD";
+                  unstage = "reset HEAD --";
+                  visual = "!gitk";
+                };
+              };
+            };
             programs.zsh = {
               enable = true;
               shellAliases = {
@@ -134,6 +191,10 @@
                 gc = "git commit -m";
                 gpu = "git push";
                 gp = "git pull";
+                # Enhanced diff aliases
+                gdelta = "git diff";  # Delta will be used automatically now
+                gdiff = "difft";  # Use difftastic for structural diffs
+                gdnp = "git --no-pager diff";  # Plain diff without delta
                 curl = "curlie";
                 k = "kubecolor";
                 kubectl = "kubecolor";
