@@ -60,8 +60,10 @@
         pkgs.cassandra
         pkgs.kafkactl
         pkgs.oh-my-posh
-        pkgs.zsh-syntax-highlighting
+        pkgs.zsh-fast-syntax-highlighting
         pkgs.zsh-autosuggestions
+        pkgs.zsh-fzf-tab
+        pkgs.zoxide
         
         # Enhanced git diff tools
         pkgs.delta          # Modern diff viewer with syntax highlighting
@@ -188,8 +190,10 @@
                 gd = "git diff";
                 gs = "git status";
                 gc = "git commit -m";
-                gpu = "git push";
+                gpu = "git push origin";
                 gp = "git pull";
+                gcm = "git checkout master";
+                gcb = "git checkout -b";
                 # Enhanced diff aliases
                 gdelta = "git diff";  # Delta will be used automatically now
                 gdiff = "difft";  # Use difftastic for structural diffs
@@ -217,6 +221,9 @@
                 doc = "docker";
                 tf = "terraform";
                 kctl = "kafkactl";
+                # Zoxide aliases for seamless transition
+                cd = "z";
+                cdi = "zi";
               };
               initContent = ''
                 # ============================================================================
@@ -259,9 +266,20 @@
                 # Enable oh-my-posh with custom theme
                 eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/custom.json)"
                 
-                # Enable zsh plugins
-                source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+                # Enable zsh plugins (order matters!)
+                # Load fzf-tab first (after compinit, before other plugins)
+                source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
+                
+                # Configure fzf-tab to use your existing fzf theme
+                zstyle ':fzf-tab:*' fzf-command fzf
+                zstyle ':fzf-tab:*' fzf-flags '--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9' '--color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9' '--color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6' '--color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4' '--height=50%' '--layout=reverse' '--border'
+                
+                # Load other plugins after fzf-tab
+                source ${pkgs.zsh-fast-syntax-highlighting}/share/zsh/site-functions/fast-syntax-highlighting.plugin.zsh
                 source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+                
+                # Enable zoxide (smart directory jumping)
+                eval "$(zoxide init zsh)"
                 
                 # ----------------------------------------------------------------------------
                 # Key Bindings Configuration
