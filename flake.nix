@@ -64,6 +64,7 @@
         pkgs.zsh-autosuggestions
         pkgs.zsh-fzf-tab
         pkgs.zoxide
+        pkgs.zsh-forgit
         
         # Enhanced git diff tools
         pkgs.delta          # Modern diff viewer with syntax highlighting
@@ -186,18 +187,22 @@
                 brew-update = "brew update && brew upgrade && brew cleanup";
                 system-update = "echo 'Updating Homebrew...' && brew update && brew upgrade && brew cleanup && echo 'Updating Nix packages...' && sudo nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin' && echo 'All updates complete!'";
                 g = "git";
-                ga = "git add";
-                gd = "git diff";
+                # Note: ga, gd, glo, gco, gcf, gcb, etc. are provided by forgit for interactive use
+                # Using different aliases for basic git commands to avoid conflicts
+                gad = "git add";     # Use gad instead of ga to avoid conflict with forgit
+                gdi = "git diff";    # Use gdi instead of gd to avoid conflict with forgit  
                 gs = "git status";
                 gc = "git commit -m";
                 gpu = "git push origin";
                 gp = "git pull";
                 gcm = "git checkout master";
-                gcb = "git checkout -b";
+                gcbn = "git checkout -b";  # Use gcbn instead of gcb to avoid conflict with forgit
                 # Enhanced diff aliases
                 gdelta = "git diff";  # Delta will be used automatically now
                 gdiff = "difft";  # Use difftastic for structural diffs
                 gdnp = "git --no-pager diff";  # Plain diff without delta
+                # Forgit provides these interactive commands directly: ga, glo, gd, gco, gcf, gcb, grh, gss, gsp
+                # No need for additional aliases - forgit commands will be available after sourcing
                 curl = "curlie";
                 k = "kubecolor";
                 kubectl = "kubecolor";
@@ -280,6 +285,18 @@
                 
                 # Enable zoxide (smart directory jumping)
                 eval "$(zoxide init zsh)"
+                
+                # ----------------------------------------------------------------------------
+                # Forgit Configuration (Interactive Git with FZF)
+                # ----------------------------------------------------------------------------
+                
+                # Forgit configuration options (set before sourcing)
+                export FORGIT_FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --height=80% --preview-window=right:60%"
+                export FORGIT_LOG_GRAPH_ENABLE=true
+                export FORGIT_COPY_CMD='pbcopy'  # macOS clipboard command
+                
+                # Source forgit for interactive git commands (after setting options)
+                source ${pkgs.zsh-forgit}/share/zsh/zsh-forgit/forgit.plugin.zsh
                 
                 # ----------------------------------------------------------------------------
                 # Key Bindings Configuration
