@@ -111,27 +111,44 @@
         -- PLUGIN CONFIGURATIONS
         -- ==============================================================================
         
-        -- Tokyo Night theme setup
-        require("tokyonight").setup({
-          style = "night", -- The theme comes in three styles, `storm`, `moon`, a darker variant `night` and `day`
-          light_style = "day", -- The theme is used when the background is set to light
-          transparent = false, -- Enable this to disable setting the background color
-          terminal_colors = true, -- Configure the colors used when opening a `:terminal` in Neovim
-          styles = {
-            comments = { italic = true },
-            keywords = { italic = true },
-            functions = {},
-            variables = {},
-            sidebars = "dark", -- style for sidebars, see below
-            floats = "dark", -- style for floating windows
+        -- One Dark theme setup (matches WezTerm's One Dark Vivid)
+        require('onedark').setup({
+          style = 'dark', -- Choose between 'dark', 'darker', 'cool', 'deep', 'warm', 'warmer' and 'light'
+          transparent = false, -- Show/hide background
+          term_colors = true, -- Change terminal color as per the selected theme style
+          ending_tildes = false, -- Show the end-of-buffer tildes
+          cmp_itemkind_reverse = false, -- reverse item kind highlights in cmp menu
+          
+          -- toggle theme style ---
+          toggle_style_key = nil, -- keybind to toggle theme style. Leave it nil to disable it, or set it to a string, for example "<leader>ts"
+          toggle_style_list = {'dark', 'darker', 'cool', 'deep', 'warm', 'warmer', 'light'}, -- List of styles to toggle between
+          
+          -- Change code style ---
+          code_style = {
+            comments = 'italic',
+            keywords = 'bold',
+            functions = 'none',
+            strings = 'none',
+            variables = 'none'
           },
-          sidebars = { "qf", "help" }, -- Set a darker background on sidebar-like windows
-          day_brightness = 0.3, -- Adjusts the brightness of the colors of the **Day** style
-          hide_inactive_statusline = false, -- Enabling this option, will hide inactive statuslines and replace them with a thin border instead
-          dim_inactive = false, -- dims inactive windows
-          lualine_bold = false, -- When `true`, section headers in the lualine theme will be bold
+          
+          -- Lualine options --
+          lualine = {
+            transparent = false, -- lualine center bar transparency
+          },
+          
+          -- Custom Highlights --
+          colors = {}, -- Override default colors
+          highlights = {}, -- Override highlight groups
+          
+          -- Plugins Config --
+          diagnostics = {
+            darker = true, -- darker colors for diagnostic
+            undercurl = true,   -- use undercurl instead of underline for diagnostics
+            background = true,    -- use background color for virtual text
+          },
         })
-        vim.cmd([[colorscheme tokyonight]])
+        require('onedark').load()
         
         -- Telescope setup (fuzzy finder)
         local telescope = require('telescope')
@@ -358,7 +375,7 @@
         -- Setup lualine (status bar)
         require('lualine').setup({
           options = {
-            theme = 'tokyonight',
+            theme = 'onedark',
             icons_enabled = true,
             component_separators = { left = "|", right = "|"},
             section_separators = { left = "", right = ""},
@@ -491,7 +508,7 @@
     # Plugins
     plugins = with pkgs.vimPlugins; [
       # Theme
-      tokyonight-nvim
+      onedark-nvim
       
       # Status line
       lualine-nvim

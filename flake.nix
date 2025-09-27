@@ -30,7 +30,6 @@
         pkgs.yq-go
         pkgs.jq
         pkgs.awscli
-        pkgs.opentofu
         pkgs.kops
         pkgs.ansible
         pkgs.prometheus
@@ -65,6 +64,7 @@
         pkgs.zsh-fzf-tab
         pkgs.zoxide
         pkgs.zsh-forgit
+        pkgs.wezterm
         
         # Enhanced git diff tools
         pkgs.delta          # Modern diff viewer with syntax highlighting
@@ -88,8 +88,8 @@
       homebrew = {
         enable = true;
         onActivation.cleanup = "uninstall";
-        taps = ["dimentium/autoraise"];
-        brews = ["tfenv" "kube-ps1" "node@24"];
+        taps = ["dimentium/autoraise" "tofuutils/tap"];
+        brews = ["tfenv" "kube-ps1" "node@24" "tofuenv"];
         casks = ["postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle"];
       };
       nix.settings.experimental-features = "nix-command flakes";
@@ -100,7 +100,7 @@
       system.stateVersion = 6;
       system.primaryUser = currentUser;
       nixpkgs.hostPlatform = "aarch64-darwin";
-      nix.enable = false;
+      nix.enable = false;      
       users.users.${currentUser} = {
         name = currentUser;
         home = "/Users/${currentUser}";
@@ -181,11 +181,20 @@
                 ll = "ls -lah";
                 cat = "bat --paging=never --theme=Dracula";
                 grep = "rg";
-                nu = "sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
-                # Package update aliases
-                nix-update = "sudo nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";
-                brew-update = "brew update && brew upgrade && brew cleanup";
-                system-update = "echo 'Updating Homebrew...' && brew update && brew upgrade && brew cleanup && echo 'Updating Nix packages...' && sudo nix flake update /private/etc/nix-darwin && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin' && echo 'All updates complete!'";
+                
+                # Nix package management
+                nup = "sudo nix flake update --flake /private/etc/nix-darwin";  # Update flake.lock
+                nugp = "sudo darwin-rebuild build --flake '/private/etc/nix-darwin#darwin' && nix store diff-closures /nix/var/nix/profiles/system /private/etc/nix-darwin/result";  # Preview changes
+                nug = "sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";  # Apply changes
+                
+                # Homebrew package management
+                bu = "brew update";  # Update brew formulae
+                bug = "brew upgrade && brew cleanup";  # Upgrade packages and cleanup
+                
+                # Combined system updates
+                sysup = "brew update && sudo nix flake update --flake /private/etc/nix-darwin";  # Update both systems
+                sysugp = "sudo darwin-rebuild build --flake '/private/etc/nix-darwin#darwin' && nix store diff-closures /nix/var/nix/profiles/system /private/etc/nix-darwin/result";  # Preview all changes
+                sysug = "brew upgrade && brew cleanup && sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'";  # Upgrade everything
                 g = "git";
                 # Note: ga, gd, glo, gco, gcf, gcb, etc. are provided by forgit for interactive use
                 # Using different aliases for basic git commands to avoid conflicts
@@ -226,9 +235,9 @@
                 doc = "docker";
                 tf = "terraform";
                 kctl = "kafkactl";
-                # Zoxide aliases for seamless transition
                 cd = "z";
                 cdi = "zi";
+                wezterm = "open -a WezTerm";
               };
               initContent = ''
                 # ============================================================================
@@ -297,19 +306,6 @@
                 
                 # Source forgit for interactive git commands (after setting options)
                 source ${pkgs.zsh-forgit}/share/zsh/zsh-forgit/forgit.plugin.zsh
-                
-                # ----------------------------------------------------------------------------
-                # Key Bindings Configuration
-                # ----------------------------------------------------------------------------
-                
-                # Enable emacs-style key bindings (required for custom bindings)
-                bindkey -e
-                
-                # Word navigation (Option + Arrow keys)
-                bindkey "^[^[[C" forward-word        # Option + Right Arrow
-                bindkey "^[^[[D" backward-word       # Option + Left Arrow
-                bindkey "^[[1;3C" forward-word       # Option + Right Arrow (alternative)
-                bindkey "^[[1;3D" backward-word      # Option + Left Arrow (alternative)
                 
                 # Load persistent AWS profile if exists
                 if [[ -f ~/.awsp && -s ~/.awsp ]]; then
@@ -450,6 +446,101 @@
                 fi
                 nc -zv "$1" "$2"
               }
+
+              # kexec-multi - Execute commands across multiple Kubernetes pods
+              # Usage: kexec-multi [--dry-run] <namespace> <pod-pattern> <command>
+              # Examples:
+              #   kexec-multi prod navipay-customer-profile-navi-service date
+              #   kexec-multi --dry-run prod valhalla-navi-service "date +%s"
+              #   kexec-multi prod navipay-customer-profile-navi-service uptime
+              function kexec-multi() {
+                local dry_run=false
+                local namespace=""
+                local pod_pattern=""
+                local command=""
+                
+                # Parse arguments
+                while [[ $# -gt 0 ]]; do
+                  case $1 in
+                    --dry-run)
+                      dry_run=true
+                      shift
+                      ;;
+                    *)
+                      if [[ -z "$namespace" ]]; then
+                        namespace="$1"
+                      elif [[ -z "$pod_pattern" ]]; then
+                        pod_pattern="$1"
+                      else
+                        command="$*"
+                        break
+                      fi
+                      shift
+                      ;;
+                  esac
+                done
+                
+                # Validate arguments
+                if [[ -z "$namespace" || -z "$pod_pattern" || -z "$command" ]]; then
+                  echo "Usage: kexec-multi [--dry-run] <namespace> <pod-pattern> <command>"
+                  echo ""
+                  echo "Options:"
+                  echo "  --dry-run    Show what would be executed without running"
+                  echo ""
+                  echo "Examples:"
+                  echo "  kexec-multi prod navipay-customer-profile-navi-service date"
+                  echo "  kexec-multi --dry-run prod valhalla-navi-service \"date +%s\""
+                  echo "  kexec-multi prod navipay-customer-profile-navi-service uptime"
+                  return 1
+                fi
+                
+                # Get matching pods
+                echo "🔍 Finding pods matching pattern '$pod_pattern' in namespace '$namespace'..."
+                local pods=$(kubectl get pods -n "$namespace" --no-headers | grep "$pod_pattern" | awk '{print $1}')
+                
+                if [[ -z "$pods" ]]; then
+                  echo "❌ No pods found matching pattern '$pod_pattern' in namespace '$namespace'"
+                  return 1
+                fi
+                
+                local pod_count=$(echo "$pods" | wc -l | tr -d ' ')
+                echo "📦 Found $pod_count pods:"
+                echo "$pods" | sed 's/^/  - /'
+                echo ""
+                
+                if [[ "$dry_run" == "true" ]]; then
+                  echo "🧪 DRY RUN - Commands that would be executed:"
+                  echo "$pods" | while read -r pod; do
+                    echo "  kubectl exec -n $namespace $pod -- $command"
+                  done
+                  return 0
+                fi
+                
+                # Execute command on all pods
+                echo "🚀 Executing command: $command"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                echo "$pods" | while read -r pod; do
+                  echo ""
+                  echo "📍 Pod: $pod"
+                  echo "   ────────────────────────────────────────────────────────────────────────"
+                  
+                  # Execute and capture result
+                  local result=$(kubectl exec -n "$namespace" "$pod" -- sh -c "$command" 2>&1)
+                  local exit_code=$?
+                  
+                  if [[ $exit_code -eq 0 ]]; then
+                    echo "   ✅ Success:"
+                    echo "$result" | sed 's/^/   │ /'
+                  else
+                    echo "   ❌ Failed (exit code: $exit_code):"
+                    echo "$result" | sed 's/^/   │ /'
+                  fi
+                done
+                
+                echo ""
+                echo "✨ Execution completed for $pod_count pods"
+              }
             '';
             # Configure bat
             home.file.".config/bat/config".text = ''
@@ -470,6 +561,347 @@
                 UseKeychain yes
                 IdentityFile ~/.ssh/id_ed25519
             '';
+            # WezTerm terminal configuration with Lua mentorship
+            home.file.".config/wezterm/wezterm.lua".text = ''
+              -- ============================================================================
+              -- 🎓 WEZTERM LUA CONFIGURATION - YOUR LUA LEARNING JOURNEY STARTS HERE!
+              -- ============================================================================
+              -- Welcome to Lua! This config will teach you Lua step by step.
+              -- Lua is simple: variables, tables, functions, and that's mostly it!
+              
+              -- 📚 LUA LESSON 1: IMPORTING MODULES
+              -- In Lua, we use 'require' to import modules (like 'import' in Python)
+              -- 'local' creates a variable that's only visible in this file
+              local wezterm = require 'wezterm'
+              
+              -- 📚 LUA LESSON 2: TABLES (LIKE OBJECTS/DICTIONARIES)
+              -- In Lua, almost everything is a table! Tables are like JSON objects.
+              -- We create an empty table to hold our configuration
+              local config = {}
+              
+              -- 📚 LUA LESSON 3: CONDITIONAL LOGIC
+              -- We can check WezTerm version and adjust accordingly
+              if wezterm.config_builder then
+                -- This is the new way (WezTerm 20220807+)
+                config = wezterm.config_builder()
+              end
+              
+              -- ============================================================================
+              -- 🎨 APPEARANCE CONFIGURATION
+              -- ============================================================================
+              
+              -- 📚 LUA LESSON 4: ASSIGNING VALUES TO TABLE FIELDS
+              -- In Lua, we assign values using = (like config.key = value)
+              -- Strings use single or double quotes (both work the same)
+              -- config.color_scheme = 'Tomorrow Night'  -- Commented out to use default theme
+              
+              -- 📚 LUA LESSON 5: NUMBERS AND BOOLEANS
+              -- Numbers don't need quotes, booleans are true/false (lowercase)
+              config.font_size = 23.0
+              config.window_background_opacity = 0.50 -- 65% opacity (35% transparency) - perfect balance
+              config.macos_window_background_blur = 13 -- Slightly less blur for cleaner look
+              
+              -- 📚 LUA LESSON 6: CALLING FUNCTIONS
+              -- Functions are called with parentheses: function_name(arguments)
+              -- wezterm.font() creates a font object
+              config.font = wezterm.font('Hack Nerd Font', { weight = 'Regular' })
+              
+              -- ============================================================================
+              -- 🪟 WINDOW CONFIGURATION
+              -- ============================================================================
+              
+              -- Window decorations (title bar style)
+              config.window_decorations = "RESIZE"
+              
+              -- Initial window size
+              config.initial_cols = 120
+              config.initial_rows = 40
+              
+              -- Window padding (space around terminal content)
+              config.window_padding = {
+                left = 10,
+                right = 10,
+                top = 10,
+                bottom = 10,
+              }
+              
+              -- ============================================================================
+              -- 📑 TAB BAR CONFIGURATION
+              -- ============================================================================
+              
+              -- Enable the tab bar
+              config.enable_tab_bar = true
+              
+              -- Hide tab bar when only one tab is open
+              config.hide_tab_bar_if_only_one_tab = true
+              
+              -- Tab bar position (true = bottom, false = top)
+              config.tab_bar_at_bottom = false
+              
+              -- Use fancy tab bar (with rounded corners)
+              config.use_fancy_tab_bar = true
+              
+              -- ============================================================================
+              -- ⌨️  KEYBOARD SHORTCUTS
+              -- ============================================================================
+              
+              -- 📚 LUA LESSON 7: ARRAYS/LISTS
+              -- Arrays in Lua are tables with numeric indices starting at 1 (not 0!)
+              -- We create an array of key binding tables
+              config.keys = {
+                -- 📚 LUA LESSON 8: TABLE CONSTRUCTORS
+                -- Each item in this array is a table with key, mods, and action fields
+                
+                -- Tab management (native WezTerm tabs!)
+                {
+                  key = 't',
+                  mods = 'CMD',
+                  action = wezterm.action.SpawnTab 'CurrentPaneDomain',
+                },
+                {
+                  key = 'w',
+                  mods = 'CMD',
+                  action = wezterm.action.CloseCurrentTab { confirm = true },
+                },
+                
+                -- Pane splitting (native WezTerm splits!)
+                {
+                  key = 'd',
+                  mods = 'CMD',
+                  action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
+                },
+                {
+                  key = 'd',
+                  mods = 'CMD|SHIFT',
+                  action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
+                },
+                
+                -- Pane navigation
+                {
+                  key = 'LeftArrow',
+                  mods = 'CMD',
+                  action = wezterm.action.ActivatePaneDirection 'Left',
+                },
+                {
+                  key = 'RightArrow',
+                  mods = 'CMD',
+                  action = wezterm.action.ActivatePaneDirection 'Right',
+                },
+                {
+                  key = 'UpArrow',
+                  mods = 'CMD',
+                  action = wezterm.action.ActivatePaneDirection 'Up',
+                },
+                {
+                  key = 'DownArrow',
+                  mods = 'CMD',
+                  action = wezterm.action.ActivatePaneDirection 'Down',
+                },
+                
+                -- Font size controls
+                {
+                  key = '=',
+                  mods = 'CMD',
+                  action = wezterm.action.IncreaseFontSize,
+                },
+                {
+                  key = '-',
+                  mods = 'CMD',
+                  action = wezterm.action.DecreaseFontSize,
+                },
+                {
+                  key = '0',
+                  mods = 'CMD',
+                  action = wezterm.action.ResetFontSize,
+                },
+                
+                -- Fullscreen toggle
+                {
+                  key = 'Enter',
+                  mods = 'CMD',
+                  action = wezterm.action.ToggleFullScreen,
+                },
+                
+                -- Copy/Paste (WezTerm handles these automatically, but we can customize)
+                {
+                  key = 'c',
+                  mods = 'CMD',
+                  action = wezterm.action.CopyTo 'Clipboard',
+                },
+                {
+                  key = 'v',
+                  mods = 'CMD',
+                  action = wezterm.action.PasteFrom 'Clipboard',
+                },
+                
+                -- Quick select mode (for URLs, file paths, etc.)
+                {
+                  key = 'Space',
+                  mods = 'CMD',
+                  action = wezterm.action.QuickSelect,
+                },
+                
+                -- Search mode
+                {
+                  key = 'f',
+                  mods = 'CMD',
+                  action = wezterm.action.Search('CurrentSelectionOrEmptyString'),
+                },
+                
+                -- Reload configuration (great for testing changes!)
+                {
+                  key = 'r',
+                  mods = 'CMD|SHIFT',
+                  action = wezterm.action.ReloadConfiguration,
+                },
+                
+                -- Word navigation and editing bindings
+                {
+                  key = 'LeftArrow',
+                  mods = 'OPT',
+                  action = wezterm.action.SendKey { key = 'b', mods = 'ALT' },
+                },
+                {
+                  key = 'RightArrow',
+                  mods = 'OPT',
+                  action = wezterm.action.SendKey { key = 'f', mods = 'ALT' },
+                },
+                {
+                  key = 'LeftArrow',
+                  mods = 'CTRL',
+                  action = wezterm.action.SendKey { key = 'a', mods = 'CTRL' },
+                },
+                {
+                  key = 'RightArrow',
+                  mods = 'CTRL',
+                  action = wezterm.action.SendKey { key = 'e', mods = 'CTRL' },
+                },
+                {
+                  key = 'w',
+                  mods = 'CTRL',
+                  action = wezterm.action.SendKey { key = 'w', mods = 'CTRL' },
+                },
+                {
+                  key = 'Backspace',
+                  mods = 'OPT',
+                  action = wezterm.action.SendKey { key = 'w', mods = 'CTRL' },
+                },
+              }
+              
+              -- ============================================================================
+              -- 🖱️  MOUSE CONFIGURATION
+              -- ============================================================================
+              
+              -- Hide mouse cursor when typing
+              config.hide_mouse_cursor_when_typing = true
+              
+              -- ============================================================================
+              -- 🎯 CURSOR CONFIGURATION
+              -- ============================================================================
+              
+              -- Enable cursor blinking
+              config.default_cursor_style = 'BlinkingBlock'
+              config.cursor_blink_rate = 500  -- Blink every 800ms (nice and smooth)
+              
+              -- ============================================================================
+              -- 📜 SCROLLBACK CONFIGURATION
+              -- ============================================================================
+              
+              -- Number of lines to keep in scrollback
+              config.scrollback_lines = 1000000
+              
+              -- ============================================================================
+              -- 🔔 BELL CONFIGURATION
+              -- ============================================================================
+              
+              -- Disable the bell (no annoying sounds!)
+              config.audible_bell = "Disabled"
+              
+              -- ============================================================================
+              -- 🎯 ADVANCED FEATURES
+              -- ============================================================================
+              
+              -- Enable hyperlink detection (clickable URLs)
+              config.hyperlink_rules = wezterm.default_hyperlink_rules()
+              
+              -- 📚 LUA LESSON 9: ADDING TO ARRAYS
+              -- We can add custom hyperlink patterns to the existing ones
+              table.insert(config.hyperlink_rules, {
+                -- Match things that look like git commit hashes
+                regex = [[\b[a-f0-9]{6,40}\b]],
+                format = 'https://github.com/search?q=$0&type=commits',
+              })
+              
+              -- ============================================================================
+              -- 🎨 CUSTOM COLOR OVERRIDES (OPTIONAL)
+              -- ============================================================================
+              
+              -- 📚 LUA LESSON 10: NESTED TABLES
+              -- We can override specific colors to match our dark theme (like iTerm2)
+              config.colors = {
+                -- Override the tab bar colors for a sleek dark look
+                tab_bar = {
+                  background = '#1e1e1e',  -- Dark background like VS Code
+                  active_tab = {
+                    bg_color = '#007acc',   -- Blue accent like VS Code
+                    fg_color = '#ffffff',
+                    intensity = 'Bold',
+                  },
+                  inactive_tab = {
+                    bg_color = '#2d2d30',   -- Subtle dark gray
+                    fg_color = '#cccccc',
+                  },
+                  inactive_tab_hover = {
+                    bg_color = '#3e3e42',   -- Slightly lighter on hover
+                    fg_color = '#ffffff',
+                  },
+                  new_tab = {
+                    bg_color = '#1e1e1e',
+                    fg_color = '#cccccc',
+                  },
+                  new_tab_hover = {
+                    bg_color = '#2d2d30',
+                    fg_color = '#ffffff',
+                  },
+                },
+              }
+              
+              -- ============================================================================
+              -- 🚀 PERFORMANCE OPTIMIZATIONS
+              -- ============================================================================
+              
+              -- Enable GPU acceleration
+              config.front_end = "WebGpu"
+              
+              -- Optimize for better performance
+              config.max_fps = 120
+              
+              -- ============================================================================
+              -- 🎓 FINAL LUA LESSON: RETURNING VALUES
+              -- ============================================================================
+              
+              -- In Lua, the last line of a script can return a value
+              -- WezTerm expects us to return our configuration table
+              -- This is how WezTerm gets all our settings!
+              return config
+              
+              -- 🎉 CONGRATULATIONS! 
+              -- You've just learned the basics of Lua through a real-world example!
+              -- 
+              -- Key Lua concepts you now know:
+              -- 1. require() - importing modules
+              -- 2. local - creating variables
+              -- 3. Tables - Lua's main data structure (like objects/dictionaries)
+              -- 4. Arrays - tables with numeric indices
+              -- 5. Functions - calling them with parentheses
+              -- 6. Conditionals - if/then statements
+              -- 7. Comments - using -- for single line, --[[ ]] for multi-line
+              -- 8. return - sending values back from functions/scripts
+              --
+              -- Want to learn more? Try modifying values and see what happens!
+              -- Use Cmd+Shift+R to reload the config and see your changes instantly!
+            '';
+            
             # Oh My Posh theme configuration
             home.file.".config/oh-my-posh/custom.json".text = ''
               {
@@ -520,7 +952,7 @@
                         "type": "kubectl",
                         "style": "plain",
                         "foreground": "#00bfff",
-                        "template": "<#00bfff>(⎈ |{{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }})</>"
+                        "template": "<#00bfff>(⎈|{{ .Context }}{{ if .Namespace }}:{{ .Namespace }}{{ end }})</>"
                       },
                       {
                         "type": "executiontime",
