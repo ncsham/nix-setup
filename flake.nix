@@ -134,24 +134,37 @@
           home-manager.users.${currentUser} = { pkgs, ... }: {
             imports = [ ./nvim.nix ];
             home.homeDirectory = "/Users/${currentUser}";
-            home.username = currentUser;
             home.stateVersion = "24.05";
             programs.git = {
               enable = true;
               extraConfig = {
                 core = {
-                  pager = "delta";  # Use delta as pager but configure it properly
+                  pager = "";  # Disable pager by default
                   editor = "nvim";
                 };
                 interactive = {
                   diffFilter = "delta --color-only";
                 };
                 delta = {
-                  navigate = true;
-                  light = false;
-                  side-by-side = true;
-                  line-numbers = true;
-                  syntax-theme = "Dracula";
+                  navigate = true;          # Use n/N to navigate between diff sections
+                  light = false;            # Dark theme
+                  side-by-side = false;     # Disable side-by-side for more compact view
+                  line-numbers = true;      # Show line numbers
+                  syntax-theme = "Dracula"; # Match your terminal theme
+                  minus-style = "syntax '#450a15'";           # Deleted lines - dark red background
+                  minus-emph-style = "syntax '#600818'";      # Emphasized parts in deleted lines
+                  plus-style = "syntax '#0c4a1b'";            # Added lines - dark green background
+                  plus-emph-style = "syntax '#0e6823'";       # Emphasized parts in added lines
+                  file-style = "bold yellow ul";              # File headers
+                  file-decoration-style = "none";
+                  hunk-header-style = "cyan bold";            # Hunk headers
+                  hunk-header-decoration-style = "cyan box";
+                  line-numbers-left-style = "cyan";
+                  line-numbers-right-style = "cyan";
+                  line-numbers-minus-style = "red";
+                  line-numbers-plus-style = "green";
+                  max-line-distance = 1;      # Better word-diff algorithm
+                  tabs = 4;                   # Tab width
                 };
                 color = {
                   ui = "auto";
@@ -222,10 +235,16 @@
                 gp = "git pull";
                 gcm = "git checkout master";
                 gcbn = "git checkout -b";  # Use gcbn instead of gcb to avoid conflict with forgit
-                # Enhanced diff aliases
-                gdelta = "git diff";  # Delta will be used automatically now
+                # Enhanced diff aliases (no pager by default)
+                gd = "git diff";           # No pager, just colored diff
+                gds = "git diff --staged";  # Diff staged changes without pager
+                gdss = "git diff --staged --stat";  # Summary of staged changes
+                # When you want to use delta pager explicitly
+                gdd = "git -c core.pager=delta diff";  # Use delta pager explicitly
+                gdds = "git -c core.pager=delta diff --staged";  # Staged with delta
+                gdsbs = "git -c core.pager=delta -c delta.side-by-side=true diff";  # Side-by-side with delta
+                gdw = "git diff --word-diff";  # Word-level diff
                 gdiff = "difft";  # Use difftastic for structural diffs
-                gdnp = "git --no-pager diff";  # Plain diff without delta
                 # Forgit provides these interactive commands directly: ga, glo, gd, gco, gcf, gcb, grh, gss, gsp
                 # No need for additional aliases - forgit commands will be available after sourcing
                 curl = "curlie";
