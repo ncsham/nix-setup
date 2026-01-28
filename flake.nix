@@ -18,7 +18,6 @@
         pkgs.git
         pkgs.htop
         pkgs.tmux
-        pkgs.mycli
         pkgs.bat
         pkgs.eza
         pkgs.python3
@@ -45,12 +44,11 @@
         pkgs.dive
         pkgs.dust
         pkgs.oci-cli
-        pkgs.jsonnet
-        pkgs.jsonnet-bundler
         pkgs.kubecolor
         pkgs.curlie
         pkgs.dive
         pkgs.sops
+        pkgs.age
         pkgs.packer
         pkgs.shfmt
         pkgs.envsubst
@@ -65,6 +63,8 @@
         pkgs.zoxide
         pkgs.zsh-forgit
         pkgs.wezterm
+        pkgs.pulumi-bin
+        pkgs.k9s
         
         # Enhanced git diff tools
         pkgs.delta          # Modern diff viewer with syntax highlighting
@@ -90,7 +90,7 @@
         onActivation.cleanup = "uninstall";
         taps = ["dimentium/autoraise" "tofuutils/tap"];
         brews = ["tfenv" "kube-ps1" "node@24" "tofuenv"];
-        casks = ["postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle"];
+        casks = ["postman" "raycast" "clipy" "orbstack" "keepassxc" "dimentium/autoraise/autoraiseapp" "rectangle" "monokle"];
       };
       nix.settings.experimental-features = "nix-command flakes";
       nixpkgs.config.allowUnfree = true;
@@ -137,7 +137,7 @@
             home.stateVersion = "24.05";
             programs.git = {
               enable = true;
-              extraConfig = {
+              settings = {
                 core = {
                   pager = "";  # Disable pager by default
                   editor = "nvim";
@@ -264,7 +264,7 @@
                 orbstack = "open -a OrbStack";
                 raycast = "open -a Raycast";
                 clipy = "open -a Clipy";
-                code = "open -a Windsurf";
+                code = "open -a Cursor";
                 dcl = "docker container ls -a";
                 dil = "docker image ls -a";
                 doc = "docker";
@@ -324,7 +324,7 @@
                 zstyle ':fzf-tab:*' fzf-flags '--color=fg:#f8f8f2,bg:#282a36,hl:#bd93f9' '--color=fg+:#f8f8f2,bg+:#44475a,hl+:#bd93f9' '--color=info:#ffb86c,prompt:#50fa7b,pointer:#ff79c6' '--color=marker:#ff79c6,spinner:#ffb86c,header:#6272a4' '--height=50%' '--layout=reverse' '--border'
                 
                 # Load other plugins after fzf-tab
-                source ${pkgs.zsh-fast-syntax-highlighting}/share/zsh/site-functions/fast-syntax-highlighting.plugin.zsh
+                source ${pkgs.zsh-fast-syntax-highlighting}/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
                 source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
                 
                 # Enable zoxide (smart directory jumping)
@@ -425,16 +425,16 @@
               }
               
               # kgp - kubectl get pods
-              # Usage: kgp <namespace> <pod-name-pattern>
+              # Usage: kgp [pod-pattern] [namespace]
               function kgp() {
                 if [ $# -eq 0 ]; then
                   kubecolor get pods --all-namespaces
                 elif [ $# -eq 1 ]; then
-                  kubecolor get pods -n "$1"
+                  kubecolor get pods --all-namespaces | grep "$1"
                 elif [ $# -eq 2 ]; then
-                  kubecolor get pods -n "$1" | grep "$2"
+                  kubecolor get pods -n "$2" | grep "$1"
                 else
-                  echo "Usage: kgp [namespace] [pod-name-pattern]"
+                  echo "Usage: kgp [pod-pattern] [namespace]"
                   return 1
                 fi
               }
@@ -576,6 +576,315 @@
                 echo ""
                 echo "✨ Execution completed for $pod_count pods"
               }
+
+              # kg - kubectl get (simple alias)
+              # Usage: kg <resource> [args...]
+              function kg() {
+                kubecolor get "$@"
+              }
+
+              # kgn - kubectl get nodes
+              # Usage: kgn [node-name]
+              function kgn() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get nodes
+                elif [ $# -eq 1 ]; then
+                  kubecolor get nodes "$1"
+                else
+                  echo "Usage: kgn [node-name]"
+                  return 1
+                fi
+              }
+
+              # kgnw - kubectl get nodes -owide
+              # Usage: kgnw [node-name]
+              function kgnw() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get nodes -owide
+                elif [ $# -eq 1 ]; then
+                  kubecolor get nodes "$1" -owide
+                else
+                  echo "Usage: kgnw [node-name]"
+                  return 1
+                fi
+              }
+
+              # kge - kubectl get events
+              # Usage: kge [involvedObject-name]
+              function kge() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get events -A
+                elif [ $# -eq 1 ]; then
+                  kubecolor get events -A --field-selector="involvedObject.name=$1"
+                else
+                  echo "Usage: kge [involvedObject-name]"
+                  return 1
+                fi
+              }
+
+              # kgew - kubectl get events -w (watch)
+              # Usage: kgew [involvedObject-name]
+              function kgew() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get events -A -w
+                elif [ $# -eq 1 ]; then
+                  kubecolor get events -A --field-selector="involvedObject.name=$1" -w
+                else
+                  echo "Usage: kgew [involvedObject-name]"
+                  return 1
+                fi
+              }
+
+              # kgpn - kubectl get pods with node field selector
+              # Usage: kgpn <node-name>
+              function kgpn() {
+                if [ $# -ne 1 ]; then
+                  echo "Usage: kgpn <node-name>"
+                  return 1
+                fi
+                kubecolor get pods --all-namespaces --field-selector="spec.nodeName=$1"
+              }
+
+              # kgi - kubectl get ingress
+              # Usage: kgi [ingress-pattern] [namespace]
+              function kgi() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get ingress --all-namespaces
+                elif [ $# -eq 1 ]; then
+                  kubecolor get ingress --all-namespaces | grep "$1"
+                elif [ $# -eq 2 ]; then
+                  kubecolor get ingress -n "$2" | grep "$1"
+                else
+                  echo "Usage: kgi [ingress-pattern] [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgiw - kubectl get ingress -owide
+              # Usage: kgiw [ingress-pattern] [namespace]
+              function kgiw() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get ingress --all-namespaces -owide
+                elif [ $# -eq 1 ]; then
+                  kubecolor get ingress --all-namespaces -owide | grep "$1"
+                elif [ $# -eq 2 ]; then
+                  kubecolor get ingress -n "$2" -owide | grep "$1"
+                else
+                  echo "Usage: kgiw [ingress-pattern] [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgd - kubectl get deployments
+              # Usage: kgd [deployment-pattern] [namespace]
+              function kgd() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get deployments --all-namespaces
+                elif [ $# -eq 1 ]; then
+                  kubecolor get deployments --all-namespaces | grep "$1"
+                elif [ $# -eq 2 ]; then
+                  kubecolor get deployments -n "$2" | grep "$1"
+                else
+                  echo "Usage: kgd [deployment-pattern] [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgdw - kubectl get deployments -owide
+              # Usage: kgdw [deployment-pattern] [namespace]
+              function kgdw() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get deployments --all-namespaces -owide
+                elif [ $# -eq 1 ]; then
+                  kubecolor get deployments --all-namespaces -owide | grep "$1"
+                elif [ $# -eq 2 ]; then
+                  kubecolor get deployments -n "$2" -owide | grep "$1"
+                else
+                  echo "Usage: kgdw [deployment-pattern] [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgs - kubectl get statefulsets
+              # Usage: kgs [statefulset-pattern] [namespace]
+              function kgs() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get statefulsets --all-namespaces
+                elif [ $# -eq 1 ]; then
+                  kubecolor get statefulsets --all-namespaces | grep "$1"
+                elif [ $# -eq 2 ]; then
+                  kubecolor get statefulsets -n "$2" | grep "$1"
+                else
+                  echo "Usage: kgs [statefulset-pattern] [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgsw - kubectl get statefulsets -owide
+              # Usage: kgsw [statefulset-pattern] [namespace]
+              function kgsw() {
+                if [ $# -eq 0 ]; then
+                  kubecolor get statefulsets --all-namespaces -owide
+                elif [ $# -eq 1 ]; then
+                  kubecolor get statefulsets --all-namespaces -owide | grep "$1"
+                elif [ $# -eq 2 ]; then
+                  kubecolor get statefulsets -n "$2" -owide | grep "$1"
+                else
+                  echo "Usage: kgsw [statefulset-pattern] [namespace]"
+                  return 1
+                fi
+              }
+
+              # YAML output functions
+              # kgpy - kubectl get pods -oyaml
+              # Usage: kgpy <pod-name> [namespace]
+              function kgpy() {
+                if [ $# -eq 0 ]; then
+                  echo "Usage: kgpy <pod-name> [namespace]"
+                  return 1
+                elif [ $# -eq 1 ]; then
+                  kubecolor get pod "$1" --all-namespaces -oyaml
+                elif [ $# -eq 2 ]; then
+                  kubecolor get pod "$1" -n "$2" -oyaml
+                else
+                  echo "Usage: kgpy <pod-name> [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgdy - kubectl get deployments -oyaml
+              # Usage: kgdy <deployment-name> [namespace]
+              function kgdy() {
+                if [ $# -eq 0 ]; then
+                  echo "Usage: kgdy <deployment-name> [namespace]"
+                  return 1
+                elif [ $# -eq 1 ]; then
+                  kubecolor get deployment "$1" --all-namespaces -oyaml
+                elif [ $# -eq 2 ]; then
+                  kubecolor get deployment "$1" -n "$2" -oyaml
+                else
+                  echo "Usage: kgdy <deployment-name> [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgny - kubectl get nodes -oyaml
+              # Usage: kgny <node-name>
+              function kgny() {
+                if [ $# -ne 1 ]; then
+                  echo "Usage: kgny <node-name>"
+                  return 1
+                fi
+                kubecolor get node "$1" -oyaml
+              }
+
+              # kgiy - kubectl get ingress -oyaml
+              # Usage: kgiy <ingress-name> [namespace]
+              function kgiy() {
+                if [ $# -eq 0 ]; then
+                  echo "Usage: kgiy <ingress-name> [namespace]"
+                  return 1
+                elif [ $# -eq 1 ]; then
+                  kubecolor get ingress "$1" --all-namespaces -oyaml
+                elif [ $# -eq 2 ]; then
+                  kubecolor get ingress "$1" -n "$2" -oyaml
+                else
+                  echo "Usage: kgiy <ingress-name> [namespace]"
+                  return 1
+                fi
+              }
+
+              # kgsy - kubectl get statefulsets -oyaml
+              # Usage: kgsy <statefulset-name> [namespace]
+              function kgsy() {
+                if [ $# -eq 0 ]; then
+                  echo "Usage: kgsy <statefulset-name> [namespace]"
+                  return 1
+                elif [ $# -eq 1 ]; then
+                  kubecolor get statefulset "$1" --all-namespaces -oyaml
+                elif [ $# -eq 2 ]; then
+                  kubecolor get statefulset "$1" -n "$2" -oyaml
+                else
+                  echo "Usage: kgsy <statefulset-name> [namespace]"
+                  return 1
+                fi
+              }
+
+              # Stern (log tailing) function
+              # stn - stern logs with pattern matching
+              # Usage: stn <pattern> [namespace]
+              function stn() {
+                if [ $# -eq 0 ]; then
+                  echo "Usage: stn <pattern> [namespace]"
+                  return 1
+                elif [ $# -eq 1 ]; then
+                  stern "$1" --all-namespaces
+                elif [ $# -eq 2 ]; then
+                  stern "$1" -n "$2"
+                else
+                  echo "Usage: stn <pattern> [namespace]"
+                  return 1
+                fi
+              }
+
+              # Port forwarding functions
+              # kpfp - kubectl port-forward pod with random local port
+              # Usage: kpfp <pod-name> <remote-port> [namespace]
+              function kpfp() {
+                if [ $# -lt 2 ]; then
+                  echo "Usage: kpfp <pod-name> <remote-port> [namespace]"
+                  return 1
+                fi
+                
+                local pod_name="$1"
+                local remote_port="$2"
+                local namespace="''${3:-default}"
+                
+                # Generate random local port between 8000-9999
+                local local_port=$((8000 + RANDOM % 2000))
+                
+                echo "🚀 Port forwarding setup:"
+                echo "   Pod:       $pod_name"
+                echo "   Namespace: $namespace"
+                echo "   Remote:    $remote_port"
+                echo "   Local:     $local_port"
+                echo ""
+                echo "📍 Visit: http://localhost:$local_port"
+                echo ""
+                echo "Press Ctrl+C to stop port forwarding"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                kubectl port-forward -n "$namespace" "$pod_name" "$local_port:$remote_port"
+              }
+
+              # kpfs - kubectl port-forward service with random local port
+              # Usage: kpfs <service-name> <remote-port> [namespace]
+              function kpfs() {
+                if [ $# -lt 2 ]; then
+                  echo "Usage: kpfs <service-name> <remote-port> [namespace]"
+                  return 1
+                fi
+                
+                local service_name="$1"
+                local remote_port="$2"
+                local namespace="''${3:-default}"
+                
+                # Generate random local port between 8000-9999
+                local local_port=$((8000 + RANDOM % 2000))
+                
+                echo "🚀 Port forwarding setup:"
+                echo "   Service:   $service_name"
+                echo "   Namespace: $namespace"
+                echo "   Remote:    $remote_port"
+                echo "   Local:     $local_port"
+                echo ""
+                echo "📍 Visit: http://localhost:$local_port"
+                echo ""
+                echo "Press Ctrl+C to stop port forwarding"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                
+                kubectl port-forward -n "$namespace" "svc/$service_name" "$local_port:$remote_port"
+              }
             '';
             # Configure bat
             home.file.".config/bat/config".text = ''
@@ -671,7 +980,7 @@
               config.hide_tab_bar_if_only_one_tab = true
               
               -- Tab bar position (true = bottom, false = top)
-              config.tab_bar_at_bottom = false
+              config.tab_bar_at_bottom = true
               
               -- Use fancy tab bar (with rounded corners)
               config.use_fancy_tab_bar = true
@@ -769,25 +1078,66 @@
                   action = wezterm.action.PasteFrom 'Clipboard',
                 },
                 
-                -- Quick select mode (for URLs, file paths, etc.)
-                {
-                  key = 'Space',
-                  mods = 'CMD',
-                  action = wezterm.action.QuickSelect,
-                },
-                
-                -- Search mode
+                -- Exact case-sensitive search (CMD+F)
                 {
                   key = 'f',
                   mods = 'CMD',
-                  action = wezterm.action.Search('CurrentSelectionOrEmptyString'),
+                  action = wezterm.action_callback(function(window, pane)
+                    window:perform_action(
+                      wezterm.action.Search { CaseSensitiveString = [[]] },
+                      pane
+                    )
+                  end),
                 },
                 
-                -- Reload configuration (great for testing changes!)
+                -- Regex search - case-insensitive by default (CMD+SHIFT+F)
                 {
-                  key = 'r',
+                  key = 'f',
                   mods = 'CMD|SHIFT',
-                  action = wezterm.action.ReloadConfiguration,
+                  action = wezterm.action_callback(function(window, pane)
+                    window:perform_action(
+                      wezterm.action.Search { Regex = [[]] },
+                      pane
+                    )
+                  end),
+                },
+                
+                -- Copy last command output (CMD+SHIFT+L)
+                -- Copies output from last command, stopping at previous prompt
+                {
+                  key = 'l',
+                  mods = 'CMD|SHIFT',
+                  action = wezterm.action_callback(function(window, pane)
+                    local dims = pane:get_dimensions()
+                    local cursor_y = dims.scrollback_rows + dims.cursor_y
+                    
+                    local lines = {}
+                    local found_content = false
+                    
+                    -- Scan upward from cursor, stop at prompt or empty region
+                    for i = cursor_y - 1, math.max(0, cursor_y - 500), -1 do
+                      local line = pane:get_lines_as_text(i, i + 1)
+                      
+                      -- Stop if we hit a prompt line (starts with special chars)
+                      if line and (line:match("^%.%-%(") or line:match("^`%-%->")) then
+                        break
+                      end
+                      
+                      -- Collect non-empty lines
+                      if line and line:match("%S") then
+                        table.insert(lines, 1, line)
+                        found_content = true
+                      elseif found_content and #lines > 5 then
+                        -- Stop at empty line only after collecting some content
+                        break
+                      end
+                    end
+                    
+                    if #lines > 0 then
+                      local text = table.concat(lines, "")
+                      window:copy_to_clipboard(text)
+                    end
+                  end),
                 },
                 
                 -- Word navigation and editing bindings
@@ -802,24 +1152,51 @@
                   action = wezterm.action.SendKey { key = 'f', mods = 'ALT' },
                 },
                 {
-                  key = 'LeftArrow',
-                  mods = 'CTRL',
-                  action = wezterm.action.SendKey { key = 'a', mods = 'CTRL' },
-                },
-                {
-                  key = 'RightArrow',
-                  mods = 'CTRL',
-                  action = wezterm.action.SendKey { key = 'e', mods = 'CTRL' },
-                },
-                {
                   key = 'w',
                   mods = 'CTRL',
                   action = wezterm.action.SendKey { key = 'w', mods = 'CTRL' },
-                },
-                {
-                  key = 'Backspace',
-                  mods = 'OPT',
-                  action = wezterm.action.SendKey { key = 'w', mods = 'CTRL' },
+                }
+              }
+              
+              -- ============================================================================
+              -- 🔍 ENHANCED SEARCH MODE (VS CODE-LIKE EXPERIENCE)
+              -- ============================================================================
+              --
+              -- 📖 QUICK SEARCH GUIDE:
+              --
+              -- KEYBOARD SHORTCUTS:
+              --   CMD+F          → Exact search (case-sensitive)
+              --   CMD+SHIFT+F    → Regex search (case-insensitive)
+              --   CMD+SHIFT+L    → Copy last command output 🔥
+              --
+              -- WHILE SEARCHING:
+              --   Enter or ↓     → Next match
+              --   ↑              → Previous match
+              --   ESC            → Exit search
+              --
+              -- 💡 DEVOPS SEARCH EXAMPLES:
+              --   • Find "error":    CMD+F → type "error"
+              --   • Find IPs:        CMD+SHIFT+F → "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+              --   • Find dates:      CMD+SHIFT+F → "\d{4}-\d{2}-\d{2}"
+              --   • Find k8s pods:   CMD+F → "pod/"
+              --   • Find git hashes: CMD+SHIFT+F → "[a-f0-9]{7,40}"
+              --
+              -- ============================================================================
+              
+              -- ============================================================================
+              -- ⌨️  ENHANCED SEARCH MODE KEY BINDINGS
+              -- ============================================================================
+              
+              -- Simple search mode navigation
+              config.key_tables = {
+                search_mode = {
+                  -- Navigate matches
+                  { key = 'Enter', mods = 'NONE', action = wezterm.action.CopyMode 'NextMatch' },
+                  { key = 'DownArrow', mods = 'NONE', action = wezterm.action.CopyMode 'NextMatch' },
+                  { key = 'UpArrow', mods = 'NONE', action = wezterm.action.CopyMode 'PriorMatch' },
+                  
+                  -- Exit search
+                  { key = 'Escape', mods = 'NONE', action = wezterm.action.CopyMode 'Close' },
                 },
               }
               
@@ -836,7 +1213,7 @@
               
               -- Enable cursor blinking
               config.default_cursor_style = 'BlinkingBlock'
-              config.cursor_blink_rate = 500  -- Blink every 800ms (nice and smooth)
+              config.cursor_blink_rate = 500  -- Blink every 500ms (nice and smooth)
               
               -- ============================================================================
               -- 📜 SCROLLBACK CONFIGURATION
@@ -899,6 +1276,13 @@
                     fg_color = '#ffffff',
                   },
                 },
+                
+                -- Enhanced search result highlighting (VS Code-like)
+                -- These colors make search matches stand out clearly
+                copy_mode_active_highlight_bg = { Color = '#ff79c6' },  -- Pink/magenta background
+                copy_mode_active_highlight_fg = { Color = '#000000' },  -- Black text for contrast
+                copy_mode_inactive_highlight_bg = { Color = '#ffb86c' }, -- Orange background for other matches
+                copy_mode_inactive_highlight_fg = { Color = '#000000' }, -- Black text
               }
               
               -- ============================================================================
@@ -910,6 +1294,25 @@
               
               -- Optimize for better performance
               config.max_fps = 120
+              
+              -- ============================================================================
+              -- 🎨 EVENT HANDLERS (Must be registered before returning config!)
+              -- ============================================================================
+              
+              -- Visual feedback when searching (displays in status bar)
+              wezterm.on('update-status', function(window, pane)
+                local search_info = ""
+                local mode = window:active_key_table()
+                
+                if mode == 'search_mode' then
+                  search_info = wezterm.format({
+                    { Foreground = { Color = '#ff79c6' } },
+                    { Text = ' 🔍 SEARCHING ' },
+                  })
+                end
+                
+                window:set_right_status(search_info)
+              end)
               
               -- ============================================================================
               -- 🎓 FINAL LUA LESSON: RETURNING VALUES

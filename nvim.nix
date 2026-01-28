@@ -221,20 +221,23 @@
         vim.keymap.set('n', '<leader>o', ':NvimTreeFocus<CR>', { desc = 'Focus file explorer' })
         
         -- Treesitter setup (better syntax highlighting)
-        -- Note: We use nvim-treesitter.withAllGrammars from Nix, so parsers are pre-installed
-        require('nvim-treesitter.configs').setup({
-          -- Don't use ensure_installed or auto_install with Nix (read-only store)
-          highlight = {
-            enable = true,
-            additional_vim_regex_highlighting = false,
-          },
-          indent = {
-            enable = true,
-          },
-        })
+        -- Parsers are provided via nvim-treesitter.withPlugins in Nix.
+        -- Guard with pcall so Neovim still starts when treesitter isn't on rtp (e.g. Cursor's embedded nvim).
+        local ok_ts, _ = pcall(require, 'nvim-treesitter.configs')
+        if ok_ts then
+          require('nvim-treesitter.configs').setup({
+            -- Don't use ensure_installed or auto_install with Nix (read-only store)
+            highlight = {
+              enable = true,
+              additional_vim_regex_highlighting = false,
+            },
+            indent = {
+              enable = true,
+            },
+          })
+        end
         
-        -- LSP Configuration
-        local lspconfig = require('lspconfig')
+        -- LSP Configuration using new vim.lsp.config API (nvim 0.11+)
         
         -- Global LSP keybindings
         vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, { desc = 'Open diagnostics' })
@@ -266,18 +269,25 @@
           end, vim.tbl_extend('force', opts, { desc = 'Format' }))
         end
         
-        -- Setup language servers
+        -- Default capabilities with completion support
+        local capabilities = require('cmp_nvim_lsp').default_capabilities()
+        
+        -- Setup language servers using new vim.lsp.config API
         
         -- Python LSP
-        lspconfig.pyright.setup({
+        vim.lsp.config.pyright = {
+          cmd = { 'pyright-langserver', '--stdio' },
+          filetypes = { 'python' },
           on_attach = on_attach,
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
-        })
+          capabilities = capabilities,
+        }
         
         -- Go LSP
-        lspconfig.gopls.setup({
+        vim.lsp.config.gopls = {
+          cmd = { 'gopls' },
+          filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
           on_attach = on_attach,
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
+          capabilities = capabilities,
           settings = {
             gopls = {
               analyses = {
@@ -286,18 +296,22 @@
               staticcheck = true,
             },
           },
-        })
+        }
         
         -- Bash LSP
-        lspconfig.bashls.setup({
+        vim.lsp.config.bashls = {
+          cmd = { 'bash-language-server', 'start' },
+          filetypes = { 'sh', 'bash' },
           on_attach = on_attach,
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
-        })
+          capabilities = capabilities,
+        }
         
         -- Lua LSP (for Neovim config)
-        lspconfig.lua_ls.setup({
+        vim.lsp.config.lua_ls = {
+          cmd = { 'lua-language-server' },
+          filetypes = { 'lua' },
           on_attach = on_attach,
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
+          capabilities = capabilities,
           settings = {
             Lua = {
               runtime = {
@@ -315,19 +329,23 @@
               },
             },
           },
-        })
+        }
         
         -- YAML LSP
-        lspconfig.yamlls.setup({
+        vim.lsp.config.yamlls = {
+          cmd = { 'yaml-language-server', '--stdio' },
+          filetypes = { 'yaml', 'yaml.docker-compose', 'yaml.gitlab' },
           on_attach = on_attach,
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
-        })
+          capabilities = capabilities,
+        }
         
         -- JSON LSP
-        lspconfig.jsonls.setup({
+        vim.lsp.config.jsonls = {
+          cmd = { 'vscode-json-language-server', '--stdio' },
+          filetypes = { 'json', 'jsonc' },
           on_attach = on_attach,
-          capabilities = require('cmp_nvim_lsp').default_capabilities(),
-        })
+          capabilities = capabilities,
+        }
         
         -- Autocompletion setup with nvim-cmp
         local cmp = require('cmp')
@@ -521,8 +539,11 @@
       telescope-nvim
       plenary-nvim
       
-      # Syntax highlighting
-      nvim-treesitter.withAllGrammars
+      # Syntax highlighting (withPlugins; withAllGrammars was removed/changed in recent nixpkgs)
+      (nvim-treesitter.withPlugins (p: [
+        p.python p.lua p.go p.bash p.json p.yaml p.markdown p.vim p.nix
+        p.javascript p.typescript p.html p.css p.toml p.dockerfile
+      ]))
       
       # LSP and completion
       nvim-lspconfig
