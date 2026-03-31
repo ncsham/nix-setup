@@ -6,13 +6,13 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ## Features
 
-- **Reproducible macOS Configuration**: All system settings, packages, and user preferences are managed from a single `flake.nix` file.
+- **Reproducible macOS Configuration**: System and user config are split across a modular flake: `flake.nix`, `configuration.nix`, `packages.nix`, and `home/` for Home Manager.
 - **Nix-Darwin Integration**: Leverage the power of Nix to manage macOS like NixOS.
-- **Home-Manager**: Manage user-level packages and dotfiles declaratively.
-- **Comprehensive Package Set**: Includes development tools (`go`, `python3`, `awscli`, `opentofu`), Kubernetes tools (`kubectl`, `helm`, `minikube`, `kops`), system utilities (`bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`), and more.
-- **Kubernetes Integration**: Pre-configured with kubectl/helm completions and custom Kubernetes helper functions.
-- **Ultimate Oh-My-Posh Experience**: Meticulously crafted prompt with smart tooltips, performance monitoring, and context-aware DevOps information display.
-- **Homebrew Support**: GUI apps and additional tools via Homebrew (Lens, Postman, Raycast, etc.).
+- **Home-Manager**: User-level packages and dotfiles are managed declaratively under `home/` (git, zsh, wezterm, oh-my-posh, etc.).
+- **Comprehensive Package Set**: Nix packages live in `packages.nix` (e.g. `go`, `python3`, `awscli`, `kubectl`, `helm`, `minikube`, `kops`, `bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`). Homebrew formulae and casks are in `configuration.nix`.
+- **Kubernetes Integration**: kubectl/helm completions and custom helper functions (see `home/functions.nix`).
+- **Oh-My-Posh**: Prompt theme is defined in YAML at `home/oh-my-posh/custom.yaml` (path, kubectl, time, tooltips).
+- **Homebrew Support**: GUI apps and extra CLI tools via Homebrew in `configuration.nix` (Postman, Raycast, OrbStack, etc.).
 - **Apple Silicon Ready**: Configured for `aarch64-darwin` (Apple Silicon/M1/M2).
 
 ---
@@ -43,7 +43,6 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
   - [Available Functions](#available-functions)
   - [Shell Features](#shell-features)
 - [Docker Helper Functions](#docker-helper-functions)
-- [PDF Processing](#pdf-processing)
 - [Terminal Key Bindings](#terminal-key-bindings)
 - [Oh-My-Posh Prompt](#oh-my-posh-prompt)
 - [Neovim Editor](#neovim-editor)
@@ -105,34 +104,35 @@ Homebrew is needed for GUI applications and some packages not available in nixpk
 ```
 
 ### Step 6: Replace with This Configuration
-Now you can replace the basic template with this comprehensive configuration:
+Now you can replace the basic template with this configuration:
 ```bash
-# Clone this repository
+# Clone this repository (or copy the repo contents into /etc/nix-darwin)
 git clone https://github.com/ncsham/nix-setup.git /tmp/nix-setup
+cd /etc/nix-darwin  # or /private/etc/nix-darwin
 
-# Backup the original files
-cp flake.nix flake.nix.bak
+# Backup existing files
+cp flake.nix flake.nix.bak 2>/dev/null || true
 cp flake.lock flake.lock.bak 2>/dev/null || true
 
-# Copy the comprehensive configuration
-cp /tmp/nix-setup/flake.nix .
-cp /tmp/nix-setup/flake.lock .
-cp /tmp/nix-setup/README.md .
+# Copy the full configuration (all modules and home/ files are required)
+cp -r /tmp/nix-setup/* .
+# Or: rsync -av --exclude='.git' /tmp/nix-setup/ .
 
-# Apply the new configuration
-sudo darwin-rebuild switch --flake '.#darwin'
+# Set your username in flake.nix (let block: currentUser = "your-username";)
+# Then apply
+sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'
 ```
 
 ### Step 7: Verify Installation
 After the rebuild completes, start a new shell session and verify:
 ```bash
-# Check if the 'nu' alias works
-nu
+# Quick rebuild (no flake update): nug
+nug
 
-# Verify Kubernetes functions
-kgp --help 2>/dev/null || echo "kubectl not configured yet"
+# Verify Kubernetes helpers (defined in ~/.functions)
+kgp 2>/dev/null || echo "kubectl not configured yet"
 
-# Check if Homebrew packages are installed
+# Check Homebrew packages
 brew list | grep -E "tfenv|kube-ps1"
 ```
 
@@ -158,25 +158,25 @@ If you already have nix-darwin installed and want to use this configuration:
    cp flake.lock flake.lock.bak 2>/dev/null || true
    ```
 
-3. **Copy the new configuration:**
+3. **Copy the new configuration** (entire repo; all modules under `home/` and root are required):
    ```bash
-   cp /tmp/nix-setup/flake.nix .
-   cp /tmp/nix-setup/flake.lock .
+   cp -r /tmp/nix-setup/* .   # or rsync/checkout into your config dir
    ```
 
-4. **Review and customize the configuration:**
-   - Edit `flake.nix` to adjust usernames, paths, and package selections as needed
-   - Update the `currentUser` variable on line 14 to match your username
+4. **Review and customize:**
+   - In `flake.nix`, set `currentUser` in the `let` block to your macOS username.
+   - Nix packages: edit `packages.nix`. Homebrew: edit `configuration.nix` (`homebrew.brews` / `homebrew.casks`).
 
-5. **Apply the new configuration:**
+5. **Apply the configuration:**
    ```bash
-   sudo darwin-rebuild switch --flake '.#darwin'
+   sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'
    ```
 
 ### Quick Commands After Setup
-- **Update system**: Use `nu` alias from anywhere
-- **Manage Terraform versions**: `tfenv list-remote`, `tfenv install <version>`, `tfenv use <version>`
-- **Kubernetes shortcuts**: `kgp`, `klp`, `ktp`, `kep` (see [Kubernetes Helper Functions](#kubernetes-helper-functions))
+- **Rebuild (no flake update)**: `nug`
+- **Update flake then rebuild**: `nup` then `nug`; or combined: `sysug` (see [Package Management](#package-management))
+- **Terraform**: `tfenv list-remote`, `tfenv install <version>`, `tfenv use <version>`
+- **Kubernetes**: `kgp`, `klp`, `ktp`, `kep` (see [Kubernetes Helper Functions](#kubernetes-helper-functions))
 
 ---
 
@@ -186,28 +186,32 @@ This section provides comprehensive guidance on managing packages in your nix-da
 
 ### Quick Update Commands
 
-The configuration includes convenient aliases for keeping your system up to date:
+Shell aliases (defined in `home/zsh.nix`) for updates:
 
-#### Available Update Aliases
+| Alias | Action |
+|-------|--------|
+| **nup** | Update Nix flake only (`sudo nix flake update --flake /private/etc/nix-darwin`) |
+| **nugp** | Build darwin config and show closure diff (preview changes; does not switch) |
+| **nug** | Apply current flake (`sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'`) |
+| **bu** | `brew update` |
+| **bug** | `brew upgrade && brew cleanup` |
+| **sysup** | Update both: `brew update` and Nix flake update |
+| **sysugp** | Preview: build darwin and show closure diff (no switch) |
+| **sysug** | Full upgrade: Homebrew upgrade + cleanup, then darwin-rebuild switch |
 
-- **`nix-update`**: Updates Nix flake and rebuilds darwin configuration
-- **`brew-update`**: Updates all Homebrew packages and performs cleanup
-- **`update-all`**: Comprehensive update that handles both Nix and Homebrew with progress messages
-- **`nu`**: Quick rebuild of current configuration (no package updates)
-
-**Usage Examples:**
+**Usage examples:**
 ```bash
-# Update only Nix packages
-nix-update
+# Update flake, then rebuild
+nup && nug
 
-# Update only Homebrew packages
-brew-update
+# Rebuild only (no updates)
+nug
 
-# Update everything (recommended)
-update-all
+# Update Homebrew
+bu && bug
 
-# Quick rebuild without updates
-nu
+# Update everything and switch
+sysug
 ```
 
 ### Checking for Updates
@@ -253,53 +257,41 @@ brew info <package-name>
 
 #### Updating All Packages
 
-**Recommended approach - Update everything:**
+**Full upgrade (Nix + Homebrew):**
 ```bash
-update-all
+sysug
 ```
-
-This command will:
-1. Update Nix flake inputs (nixpkgs, etc.)
-2. Rebuild and switch to new darwin configuration
-3. Update all Homebrew packages (both formulas and casks)
-4. Clean up old Homebrew versions
-5. Provide progress feedback throughout
+This runs `brew upgrade && brew cleanup` then `sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'`. To also refresh the flake inputs first: `sysup` then `sysug`, or run `nup` before `sysug`.
 
 #### Updating Nix Packages Only
 
 ```bash
-# Update and apply Nix configuration
-nix-update
+nup    # Update flake inputs
+nug    # Rebuild and switch
 
-# Or manually step by step:
-sudo nix flake update /private/etc/nix-darwin
+# Or manually:
+sudo nix flake update --flake /private/etc/nix-darwin
 sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'
 ```
 
 #### Updating Homebrew Packages Only
 
 ```bash
-# Update all Homebrew packages
-brew-update
+bu && bug
 
 # Or manually:
-brew update && brew upgrade && brew upgrade --cask && brew cleanup
+brew update && brew upgrade && brew cleanup
 
-# Update specific package
+# Single package/cask
 brew upgrade <package-name>
-
-# Update specific cask
 brew upgrade --cask <cask-name>
 ```
 
 #### Updating Individual Packages
 
-**For Nix packages:** Individual Nix package updates require editing `flake.nix` and rebuilding:
-1. Edit `/private/etc/nix-darwin/flake.nix`
-2. Update the package version or add/remove packages in `environment.systemPackages`
-3. Run `nu` to rebuild
+**Nix packages:** Edit `packages.nix` (add/remove entries in the list), then run `nug` to rebuild.
 
-**For Homebrew packages:**
+**Homebrew packages:**
 ```bash
 # Update individual formula
 brew upgrade <package-name>
@@ -384,46 +376,49 @@ brew list --cask
 
 ### Package Sources
 
-#### Nix Packages (`environment.systemPackages`)
-- **Source**: nixpkgs-unstable channel
-- **Location in config**: `flake.nix` → `environment.systemPackages` array
-- **Type**: Primarily CLI tools and system libraries
+#### Nix Packages
+- **Source**: nixpkgs (unstable, from flake input)
+- **Location**: `packages.nix` (function returning a list); used in `configuration.nix` as `environment.systemPackages = import ./packages.nix { inherit pkgs; };`
 - **Examples**: `kubectl`, `helm`, `go`, `python3`, `docker-compose`
-- **Update method**: `nix-update` or `update-all`
+- **Update**: `nup` then `nug`, or `sysug`
 
-#### Homebrew Formulas (`homebrew.brews`)
-- **Source**: Homebrew formulae
-- **Location in config**: `flake.nix` → `homebrew.brews` array
-- **Type**: CLI tools not available in Nix or with better Homebrew support
-- **Examples**: `tfenv`, `kube-ps1`, `node@24`
-- **Update method**: `brew-update` or `update-all`
+#### Homebrew Formulas
+- **Location**: `configuration.nix` → `homebrew.brews`
+- **Examples**: `tfenv`, `kube-ps1`, `node@24`, `tofuenv`
+- **Update**: `bu && bug` or `sysug`
 
-#### Homebrew Casks (`homebrew.casks`)
-- **Source**: Homebrew casks
-- **Location in config**: `flake.nix` → `homebrew.casks` array
-- **Type**: GUI applications for macOS
-- **Examples**: `postman`, `raycast`, `keepassxc`, `rectangle`
-- **Update method**: `brew-update` or `update-all`
+#### Homebrew Casks
+- **Location**: `configuration.nix` → `homebrew.casks`
+- **Examples**: `postman`, `raycast`, `clipy`, `orbstack`, `keepassxc`, `rectangle`, `monokle`
+- **Update**: `bug` or `sysug`
 
-**Package Priority Guidelines:**
-1. **Prefer Nix packages** for reproducibility and declarative management
-2. **Use Homebrew formulas** when Nix packages are outdated or unavailable
-3. **Use Homebrew casks** for all GUI applications (required for macOS apps)
-
-**Adding New Packages:**
-1. Search for the package using methods above
-2. Add to appropriate section in `flake.nix`:
-   - Nix: `environment.systemPackages = [ pkgs.<package-name> ];`
-   - Homebrew formula: `homebrew.brews = [ "<package-name>" ];`
-   - Homebrew cask: `homebrew.casks = [ "<package-name>" ];`
-3. Run `nu` to apply changes
+**Adding packages:**
+- **Nix**: Add `pkgs.<name>` to the list in `packages.nix`, then run `nug`.
+- **Homebrew formula**: Add to `homebrew.brews` in `configuration.nix`, then `nug`.
+- **Homebrew cask**: Add to `homebrew.casks` in `configuration.nix`, then `nug`.
 
 ---
 
 ## Key Components
 
-- **flake.nix**: Main configuration file containing all system, user, and package definitions.
-- **flake.lock**: Auto-generated lock file to pin dependency versions.
+| File or directory | Purpose |
+|-------------------|---------|
+| **flake.nix** | Flake entry: inputs, `currentUser`, and darwin config wiring (imports `configuration.nix`, home-manager, `home-manager.nix`). |
+| **configuration.nix** | macOS system config: `environment.systemPackages` (via `packages.nix`), homebrew (taps, brews, casks), nix settings, system defaults, users. |
+| **packages.nix** | List of Nix system packages (single function `{ pkgs }: [ ... ]`). Edit here to add/remove Nix CLI tools. |
+| **home-manager.nix** | Home Manager integration: `useGlobalPkgs`, `useUserPackages`, `extraSpecialArgs`, and `users.<currentUser> = import ./home`. |
+| **home/default.nix** | Home Manager entry: imports (nvim, git, zsh, functions, bat, ssh, wezterm, oh-my-posh), `homeDirectory`, `stateVersion`. |
+| **home/git.nix** | Git and delta configuration. |
+| **home/zsh.nix** | Zsh: shell aliases and `initContent` (options, plugins, fzf, forgit, env). |
+| **home/functions.nix** | Shell helpers written to `~/.functions` (kubectl, docker, port-forward, etc.). |
+| **home/bat.nix** | Bat config (`~/.config/bat/config`). |
+| **home/ssh.nix** | SSH config snippets (`~/.ssh/config_work`, `~/.ssh/config_personal`). |
+| **home/wezterm.nix** | Deploys `home/wezterm/wezterm.lua` to `~/.config/wezterm/wezterm.lua`. |
+| **home/oh-my-posh.nix** | Deploys `home/oh-my-posh/custom.yaml` to `~/.config/oh-my-posh/custom.yaml`. |
+| **home/wezterm/wezterm.lua** | WezTerm Lua config (standalone file for editor support). |
+| **home/oh-my-posh/custom.yaml** | Oh-My-Posh theme (YAML for editor formatting/linting). |
+| **nvim.nix** | Neovim Home Manager config (at repo root). |
+| **flake.lock** | Auto-generated lock file for flake inputs. |
 
 ---
 
@@ -515,17 +510,15 @@ This configuration includes convenient Docker aliases and functions for containe
 
 ### Docker Aliases
 
-- **doc**: Short alias for `docker`
-- **dcl**: List all Docker containers (`docker container ls -a`)
-- **dil**: List all Docker images (`docker image ls -a`)
-- **spdf**: Start Stirling PDF server (`stirling-pdf`)
+- **doc**: Alias for `docker`
+- **dcl**: List all containers (`docker container ls -a`)
+- **dil**: List all images (`docker image ls -a`)
 
-**Usage Examples:**
+**Usage examples:**
 ```bash
-doc ps                      # Same as docker ps
-dcl                         # List all containers (running and stopped)
-dil                         # List all images
-spdf                        # Start Stirling PDF web server
+doc ps    # docker ps
+dcl       # List all containers
+dil       # List all images
 ```
 
 ### Docker Helper Functions
@@ -574,35 +567,6 @@ spdf                        # Start Stirling PDF web server
 - **Enhanced history**: 100k command history with sharing between sessions
 - **Performance optimized**: Lazy-loading completions and cached context checks for fast shell startup
 - **Zsh Options**: Auto-cd, command correction, intelligent history, and extended globbing
-
----
-
-## PDF Processing
-
-This configuration includes Stirling PDF, a self-hosted web application for PDF manipulation.
-
-### Starting Stirling PDF
-
-After running `nu` (darwin-rebuild), you can start Stirling PDF:
-
-```bash
-# Using the alias (recommended)
-spdf
-
-# Or directly
-stirling-pdf
-```
-
-This starts a web server on `http://localhost:8080` where you can:
-- Merge, split, and rotate PDFs
-- Convert between formats
-- Add/remove pages
-- OCR scanned documents
-- Add watermarks and signatures
-- Compress PDFs
-- And much more
-
-**Note:** Stirling PDF runs locally and doesn't send your documents to external servers, ensuring privacy.
 
 ---
 
@@ -744,68 +708,12 @@ Intelligent context-aware information that appears only when needed:
 
 ### 🔧 Configuration Highlights
 
-- **Tooltip Action**: `extend` - non-intrusive information overlay
-- **Path Style**: `agnoster_full` - complete directory visibility
-- **Execution Threshold**: `1ms` - captures meaningful performance data
-- **Git Properties**: `fetch_status: true`, `fetch_upstream_icon: true`
-- **Multi-trigger Support**: Git (`git`, `g`) and AWS (`aws`, `terraform`, `tf`) commands
-
-### 🔍 Advanced Tooltips Configuration
-
-#### Git Tooltip Deep Dive
-The git tooltip system provides comprehensive repository information:
-
-```json
-{
-  "type": "git",
-  "style": "plain",
-  "foreground": "#f8bbd9",
-  "template": "{{ .HEAD }}{{ if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if .Staging.Changed }} | {{ .Staging.String }}{{ end }}",
-  "properties": {
-    "fetch_status": true,
-    "fetch_upstream_icon": true
-  }
-}
-```
-
-**Template Variables Explained:**
-- `{{ .HEAD }}`: Current branch name with git icon
-- `{{ .BranchStatus }}`: Ahead/behind upstream indicators
-- `{{ .Working.String }}`: Count of modified files in working directory
-- `{{ .Staging.String }}`: Count of files staged for commit
-
-**Trigger Configuration:**
-```json
-"tooltips": [
-  {
-    "tips": [/* git tooltip config */],
-    "command": "git",
-    "param": "git"
-  },
-  {
-    "tips": [/* git tooltip config */],
-    "command": "g",
-    "param": "g"
-  }
-]
-```
-
-#### AWS Tooltip Deep Dive
-The AWS tooltip displays current profile and region:
-
-```json
-{
-  "type": "aws",
-  "style": "plain",
-  "foreground": "#ffcc66",
-  "template": "☁️ {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }}"
-}
-```
-
-**Multi-Command Triggers:**
-- `aws ` - Direct AWS CLI usage
-- `terraform ` - Infrastructure as Code operations
-- `tf ` - Terraform alias for quick commands
+- **Config file**: `home/oh-my-posh/custom.yaml` (YAML; deployed to `~/.config/oh-my-posh/custom.yaml`).
+- **Tooltip action**: `extend` – tooltips extend the prompt.
+- **Path style**: `agnoster_full` in the path segment.
+- **Execution threshold**: 1 ms (segment `executiontime`).
+- **Git tooltip**: `tips: [git, g]`; `fetch_status` and `fetch_upstream_icon` in properties.
+- **AWS tooltip**: `tips: [aws, terraform, tf]`; template shows `{{.Profile}}@{{.Region}}`.
 
 ### 🎯 Troubleshooting Oh-My-Posh Prompt
 
@@ -813,15 +721,14 @@ The AWS tooltip displays current profile and region:
 
 **1. Prompt Not Appearing After Configuration**
 ```bash
-# Rebuild and restart shell
-nu  # Rebuild nix-darwin configuration
-exec zsh  # Restart shell session
+nug              # Rebuild and switch
+exec zsh         # Restart shell
 ```
 
 **2. Tooltips Not Triggering**
-- Ensure you type the command followed by a space
-- Check that oh-my-posh version supports tooltips (v12.0+)
-- Verify JSON syntax in flake.nix configuration
+- Type the command followed by a space (e.g. `git `, `aws `)
+- Ensure oh-my-posh supports tooltips (v12.0+)
+- Check YAML syntax in `home/oh-my-posh/custom.yaml`
 
 **3. Kubernetes Context Not Showing**
 ```bash
@@ -855,101 +762,37 @@ git config --list
 **6. Colors Not Displaying Correctly**
 - Verify terminal supports 256 colors or true color
 - Check terminal color scheme compatibility
-- Test with: `oh-my-posh print primary --config ~/.config/oh-my-posh/theme.json`
+- Test: `oh-my-posh print primary --config ~/.config/oh-my-posh/custom.yaml`
 
 **7. Performance Issues**
-- Increase execution time threshold in configuration
-- Disable git fetch_status for large repositories
-- Use `oh-my-posh debug` to identify slow segments
+- Increase execution time threshold in `home/oh-my-posh/custom.yaml`
+- Disable git `fetch_status` for large repos
+- Use `oh-my-posh debug --config ~/.config/oh-my-posh/custom.yaml` to find slow segments
 
-#### Debug Commands
+#### Debug commands
 
 ```bash
-# Test oh-my-posh configuration
-oh-my-posh print primary --config <(echo '$ohMyPoshConfig' | jq -r '.')
+# Test prompt
+oh-my-posh print primary --config ~/.config/oh-my-posh/custom.yaml
 
-# Debug specific segments
-oh-my-posh debug --config <config-file>
+# Debug segments
+oh-my-posh debug --config ~/.config/oh-my-posh/custom.yaml
 
-# Check oh-my-posh version
+# Version
 oh-my-posh version
-
-# Validate JSON configuration
-echo '$ohMyPoshConfig' | jq '.'
 ```
 
 ### ⚙️ Customizing Your Prompt
 
-#### Adding New Segments
-To add new segments to your prompt, modify the `segments` array in `flake.nix`:
+Edit **`home/oh-my-posh/custom.yaml`** (YAML). It is deployed to `~/.config/oh-my-posh/custom.yaml` by `home/oh-my-posh.nix`.
 
-```nix
-# Example: Add Node.js version segment
-{
-  type = "node";
-  style = "plain";
-  foreground = "#3C873A";
-  template = " {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}";
-}
-```
+- **Add segments**: Add new entries under `blocks` (see [Oh-My-Posh docs](https://ohmyposh.dev/docs/)).
+- **Change colors**: Set `foreground` (hex) on the segment.
+- **Tooltips**: Edit the `tooltips` list; triggers are in `tips` (e.g. `git`, `g`, `aws`, `terraform`, `tf`).
+- **Execution time**: Under the segment with `type: executiontime`, set `properties.threshold` (e.g. `500` for 500 ms).
+- **Git tooltip**: Under the `type: git` tooltip, set `fetch_status: false` for large repos if needed.
 
-#### Modifying Colors
-Update the `foreground` property for any segment:
-
-```nix
-# Change path color to blue
-{
-  type = "path";
-  style = "agnoster_full";
-  foreground = "#0066cc";  # Changed from #00ff00
-  # ... rest of configuration
-}
-```
-
-#### Adding Custom Tooltips
-Create new tooltip configurations for different commands:
-
-```nix
-# Example: Docker tooltip
-{
-  tips = [
-    {
-      type = "docker";
-      style = "plain";
-      foreground = "#2496ED";
-      template = " {{ .Context }}";
-    }
-  ];
-  command = "docker";
-  param = "docker";
-}
-```
-
-#### Performance Tuning
-
-**Adjust Execution Time Threshold:**
-```nix
-{
-  type = "executiontime";
-  style = "austin";
-  foreground = "#87ceeb";
-  properties = {
-    threshold = 500;  # Changed from 1ms to 500ms
-    style = "austin";
-  };
-}
-```
-
-**Optimize Git Performance:**
-```nix
-{
-  type = "git";
-  properties = {
-    fetch_status = false;      # Disable for large repos
-    fetch_upstream_icon = false;
-  };
-}
-```
+After editing, run `nug` and restart the shell (or `exec zsh`).
 
 ---
 
@@ -1020,67 +863,41 @@ All language servers provide:
 
 To use Neovim after applying the configuration:
 ```bash
-# Rebuild the configuration
-nu
-
-# Start Neovim
-nvim
-
-# Or use the aliases
-vim   # Also opens Neovim
-vi    # Also opens Neovim
+nug        # Rebuild if you changed nvim.nix
+nvim       # Or: vim (alias)
 ```
 
 ---
 
 ## Included Packages
 
-### Development Tools
-- **Languages**: `go`, `python3`
-- **Editors**: `neovim`
-- **Version Control**: `git`
+**Nix packages** are listed in **`packages.nix`**; **Homebrew** formulae and casks are in **`configuration.nix`**.
 
-### Cloud & Infrastructure
-- **AWS**: `awscli`
-- **Oracle Cloud**: `oci-cli`
-- **Terraform**: `opentofu` (OpenTofu)
-- **Configuration Management**: `ansible`
-- **Image Building**: `packer`
-- **Secrets Management**: `sops`
+### Nix (packages.nix)
 
-### Kubernetes & Container Tools
-- **Core**: `kubectl`, `kubernetes-helm`, `minikube`
-- **Management**: `kops`, `k9s`, `kubectx`, `stern`
-- **Container**: `docker-compose`, `dive` (Docker image analyzer)
-- **Utilities**: `kubecolor` (colorized kubectl output)
+- **Development**: `go`, `python3`, `git`, `delta`, `difftastic`
+- **Cloud / infra**: `awscli`, `oci-cli`, `ansible`, `packer`, `sops`, `age`, `pulumi-bin`
+- **Kubernetes / containers**: `kubectl`, `kubernetes-helm`, `minikube`, `kops`, `k9s`, `kubectx`, `stern`, `docker-compose`, `dive`, `kubecolor`
+- **Utilities**: `bat`, `eza`, `tree`, `rsync`, `ncdu`, `dust`, `fzf`, `ripgrep`, `htop`, `prometheus`, `fastfetch`, `tmux`, `jq`, `yq-go`, `wget`, `curlie`, `postgresql`, `shfmt`, `envsubst`, `gojsontoyaml`, `pwgen`, `cassandra`, `kafkactl`
+- **Shell / prompt**: `oh-my-posh`, `zsh-fast-syntax-highlighting`, `zsh-autosuggestions`, `zsh-fzf-tab`, `zoxide`, `zsh-forgit`, `wezterm`
+- **Neovim LSP/formatters**: `pyright`, `gopls`, `bash-language-server`, `lua-language-server`, `yaml-language-server`, `vscode-langservers-extracted`, `black`, `gofumpt`, `shellcheck`, `stylua`, `prettier`
 
-### System Utilities
-- **File Management**: `bat`, `eza`, `tree`, `rsync`, `ncdu`, `dust` (disk usage analyzer)
-- **Search**: `fzf`, `ripgrep`
-- **System Monitoring**: `htop`, `prometheus`, `fastfetch`
-- **Terminal**: `tmux`
-- **Data Processing**: `jq`, `yq-go`, `jsonnet`, `jsonnet-bundler`
-- **Network**: `wget`, `curlie` (modern curl alternative)
-- **Database**: `mycli`, `postgresql`
-- **Document Processing**: `stirling-pdf` (self-hosted PDF manipulation)
-- **Infrastructure**: `packer` (image building), `sops` (secrets management)
-- **Shell Tools**: `shfmt` (shell formatter), `envsubst` (environment variable substitution)
-- **Data Conversion**: `gojsontoyaml` (JSON to YAML converter)
+### Homebrew (configuration.nix)
 
-### Homebrew Packages
-- **Development**: Lens (Kubernetes IDE), Postman (API testing)
-- **Productivity**: Raycast (launcher), Clipy (clipboard), Rectangle (window management)
-- **Security**: KeePassXC (password manager)
-- **Infrastructure**: OrbStack (containers), AutoRaise
-- **CLI Tools**: `tfenv` (Terraform version manager), `kube-ps1` (Kubernetes prompt)
+- **Brews**: `tfenv`, `kube-ps1`, `node@24`, `tofuenv`
+- **Casks**: Postman, Raycast, Clipy, OrbStack, KeePassXC, AutoRaise, Rectangle, Monokle
 
 ---
 
 ## Customization
 
-- **Add or remove packages**: Edit the `environment.systemPackages` list in `flake.nix`.
-- **Enable/disable Homebrew casks**: Edit the `homebrew.casks` list.
-- **Change username**: Update the `currentUser` variable on line 14 of `flake.nix` to match your system username.
+- **Username**: Set `currentUser` in the `let` block in `flake.nix` to your macOS username.
+- **Nix packages**: Edit the list in `packages.nix`, then run `nug`.
+- **Homebrew formulae/casks**: Edit `homebrew.brews` and `homebrew.casks` in `configuration.nix`, then run `nug`.
+- **Shell aliases and rc**: `home/zsh.nix`.
+- **Oh-My-Posh theme**: `home/oh-my-posh/custom.yaml`.
+- **WezTerm**: `home/wezterm/wezterm.lua`.
+- **Git config**: `home/git.nix`. **Kubernetes/Docker shell helpers**: `home/functions.nix`.
 
 ---
 
@@ -1104,4 +921,4 @@ MIT
 
 ---
 
-*Last updated on 2025-09-14. For questions or improvements, please open an issue or PR.*
+*Last updated to match the modular layout: flake.nix, configuration.nix, packages.nix, home-manager.nix, home/* (including home/oh-my-posh/custom.yaml and home/wezterm/wezterm.lua).*
