@@ -7,7 +7,7 @@
       vim = "nvim";
       ls = "eza";
       ll = "ls -lah";
-      cat = "bat --paging=never --theme=Dracula";
+      cat = "bat";
       grep = "rg";
 
       # Nix package management (nug/nugp/sysug* are functions — see initContent)
@@ -48,12 +48,10 @@
       ktx = "kubectx";
       kns = "kubens";
       awsp = "source _awsp";
-      lens = "open -a Lens";
       arc = "open -a Arc";
       keepassxc = "open -a KeePassXC";
       postman = "open -a Postman";
       orbstack = "open -a OrbStack";
-      raycast = "open -a Raycast";
       clipy = "open -a Clipy";
       code = "open -a Cursor";
       dcl = "docker container ls -a";
@@ -70,7 +68,11 @@
       # SHELL INITIALIZATION CONFIGURATION
       # ============================================================================
 
+      # For List of Zsh Options: https://zsh.sourceforge.io/Doc/Release/Options.html 
       setopt AUTO_CD
+      setopt AUTO_PUSHD
+      setopt PUSHD_SILENT
+      setopt PUSHD_IGNORE_DUPS
       setopt CORRECT
       setopt CORRECT_ALL
       setopt HIST_IGNORE_DUPS
@@ -82,9 +84,7 @@
       setopt EXTENDED_HISTORY
       setopt APPEND_HISTORY
       setopt INC_APPEND_HISTORY
-      setopt AUTO_PUSHD
-      setopt PUSHD_IGNORE_DUPS
-      setopt PUSHD_SILENT
+      setopt HIST_REDUCE_BLANKS
       setopt GLOB_DOTS
       setopt EXTENDED_GLOB
       setopt NO_BEEP
@@ -132,21 +132,7 @@
       export HISTSIZE=10000
       export SAVEHIST=100000
       export SHARE_HISTORY=true
-      export AWS_DEFAULT_REGION=ap-south-1
-
-      # nix-darwin: functions (not aliases) so $USER and the flake attr are safe at run time.
-      # zsh: unquoted # starts a comment — without #darwin, darwin-rebuild uses hostname as the config name.
-      nug() {
-        local flake='/private/etc/nix-darwin#darwin'
-        sudo /usr/bin/env USER="$USER" darwin-rebuild switch --impure --flake "$flake"
-      }
-      nugp() {
-        local flake='/private/etc/nix-darwin#darwin'
-        sudo /usr/bin/env USER="$USER" darwin-rebuild build --impure --flake "$flake" \
-          && nix store diff-closures /nix/var/nix/profiles/system /private/etc/nix-darwin/result
-      }
-      sysugp() { nugp; }
-      sysug() { brew upgrade && brew cleanup && nug; }
+      export AWS_REGION=ap-south-1
     '';
   };
 }

@@ -1,5 +1,5 @@
 {
-  description = "NCShams Default Flake";
+  description = "NCShams Flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -11,8 +11,6 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
   let
-    # Resolved at eval time from the environment; requires --impure on darwin-rebuild
-    # (or any `nix` command that evaluates this flake). Shell expands USER before sudo.
     currentUser =
       let
         u = builtins.getEnv "USER";

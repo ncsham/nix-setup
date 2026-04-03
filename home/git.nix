@@ -4,6 +4,10 @@
   programs.git = {
     enable = true;
     settings = {
+      user = {
+        name = "NCSham";
+        email = "sudoer@ncsham.in";
+      };
       core = {
         pager = "";
         editor = "nvim";
@@ -47,17 +51,6 @@
         autoSetupRemote = true;
       };
       init.defaultBranch = "main";
-      alias = {
-        st = "status";
-        co = "checkout";
-        br = "branch";
-        ci = "commit";
-        df = "diff";
-        lg = "log --oneline --graph --decorate --all";
-        last = "log -1 HEAD";
-        unstage = "reset HEAD --";
-        visual = "!gitk";
-      };
     };
   };
 }

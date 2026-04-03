@@ -2,6 +2,19 @@
 { ... }:
 {
   home.file.".functions".text = ''
+    # Nix Functions
+    nug() {
+      local flake='/private/etc/nix-darwin#darwin'
+      sudo /usr/bin/env USER="$USER" darwin-rebuild switch --impure --flake "$flake"
+    }
+    nugp() {
+      local flake='/private/etc/nix-darwin#darwin'
+      sudo /usr/bin/env USER="$USER" darwin-rebuild build --impure --flake "$flake" \
+        && nix store diff-closures /nix/var/nix/profiles/system /private/etc/nix-darwin/result
+    }
+    sysugp() { nugp; }
+    sysug() { brew upgrade && brew cleanup && nug; }
+
     # Kubectl convenience functions
     function ktp() {
       if [ $# -ne 2 ]; then

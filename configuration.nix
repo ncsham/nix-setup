@@ -3,22 +3,6 @@
 {
   environment.systemPackages = import ./packages.nix { inherit pkgs; };
 
-  # # Not about pkgs.python3 (that is already 3.13). Some other packages still pull python311Packages
-  # # transitively (e.g. cassandra, ansible, awscli, black). Sphinx 9.1 is marked incompatible with
-  # # py311 in nixpkgs, so that closure fails to evaluate until this override or an upstream fix.
-  # nixpkgs.overlays = [
-  #   (final: prev: {
-  #     python311 = prev.python311.override {
-  #       packageOverrides = pyself: pyprev: {
-  #         sphinx = pyprev.sphinx.overridePythonAttrs (old: {
-  #           disabled = false;
-  #         });
-  #       };
-  #     };
-  #     python311Packages = final.python311.pkgs;
-  #   })
-  # ];
-
   homebrew = {
     enable = true;
     onActivation.cleanup = "uninstall";
@@ -26,7 +10,6 @@
     brews = [ "tfenv" "kube-ps1" "node@24" "tofuenv" ];
     casks = [
       "postman"
-      "raycast"
       "clipy"
       "orbstack"
       "keepassxc"

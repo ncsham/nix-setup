@@ -7,6 +7,7 @@
   pkgs.tmux
   pkgs.bat
   pkgs.eza
+  pkgs.coreutils
   pkgs.go
   pkgs.python315
   pkgs.lua

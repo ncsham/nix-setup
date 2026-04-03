@@ -58,6 +58,7 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 - [Customization](#customization)
 - [Troubleshooting](#troubleshooting)
 - [References](#references)
+- [Nix language basics (Python comparison)](#nix-language-basics-python-comparison)
 
 ---
 
@@ -905,6 +906,12 @@ nvim       # Or: vim (alias)
 
 - If you encounter issues with missing packages or errors during the build, ensure your Nix and nix-darwin installations are up to date.
 - For Homebrew casks, make sure Homebrew is installed manually (not managed by Nix).
+
+---
+
+## Nix language basics (Python comparison)
+
+If you know Python and want to read `flake.nix`, `packages.nix`, and Home Manager modules without learning Nix from scratch first, see **[docs/nix-language-basics-python.md](docs/nix-language-basics-python.md)**. It compares bindings, functions, conditionals, attrsets, and flake inputs/outputs to familiar Python ideas.
 
 ---
 
