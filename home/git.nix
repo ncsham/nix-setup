@@ -52,5 +52,6 @@
       };
       init.defaultBranch = "main";
     };
+    signing.format = null;
   };
 }

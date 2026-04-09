@@ -2,6 +2,7 @@
 { config, pkgs, currentUser, self, ... }:
 {
   environment.systemPackages = import ./packages.nix { inherit pkgs; };
+  fonts.packages = [ pkgs.nerd-fonts.hack ];
 
   homebrew = {
     enable = true;
