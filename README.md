@@ -19,14 +19,6 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ## Table of Contents
 
-- [Initial Setup from Scratch](#initial-setup-from-scratch)
-  - [Step 1: Install the Determinate Nix Distribution](#step-1-install-the-determinate-nix-distribution)
-  - [Step 2: Create the Base Configuration Directory](#step-2-create-the-base-configuration-directory)
-  - [Step 3: Initialize with Unstable Nixpkgs](#step-3-initialize-with-unstable-nixpkgs)
-  - [Step 4: Initial nix-darwin Installation](#step-4-initial-nix-darwin-installation)
-  - [Step 5: Install Homebrew](#step-5-install-homebrew-optional-but-recommended)
-  - [Step 6: Replace with This Configuration](#step-6-replace-with-this-configuration)
-  - [Step 7: Verify Installation](#step-7-verify-installation)
 - [Getting Started](#getting-started)
   - [For Existing nix-darwin Users](#for-existing-nix-darwin-users)
   - [Quick Commands After Setup](#quick-commands-after-setup)
@@ -62,83 +54,6 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ---
 
-## Initial Setup from Scratch
-
-If you're setting up nix-darwin for the first time on a fresh macOS system, follow these steps:
-
-### Step 1: Install the Determinate Nix Distribution
-The Determinate Nix installer provides a more reliable and feature-complete Nix installation:
-```bash
-curl -fsSL https://install.determinate.systems/nix | sh -s -- install --determinate
-```
-
-### Step 2: Create the Base Configuration Directory
-Set up the nix-darwin configuration directory with proper permissions:
-```bash
-sudo mkdir -p /etc/nix-darwin
-sudo chown $(id -nu):$(id -ng) /etc/nix-darwin
-cd /etc/nix-darwin
-```
-
-### Step 3: Initialize with Unstable Nixpkgs
-Create a basic flake configuration and customize it for your system:
-```bash
-# Initialize the flake template
-nix flake init -t nix-darwin/master
-
-# Replace 'simple' with your actual hostname (optional - you can use 'darwin' for generic)
-sed -i '' "s/simple/$(scutil --get LocalHostName)/" flake.nix
-# OR use generic configuration:
-sed -i '' "s/simple/darwin/" flake.nix
-```
-
-### Step 4: Initial nix-darwin Installation
-Install nix-darwin for the first time:
-```bash
-sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake '.#darwin'
-```
-
-### Step 5: Install Homebrew (Optional but Recommended)
-Homebrew is needed for GUI applications and some packages not available in nixpkgs:
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-### Step 6: Replace with This Configuration
-Now you can replace the basic template with this configuration:
-```bash
-# Clone this repository (or copy the repo contents into /etc/nix-darwin)
-git clone https://github.com/ncsham/nix-setup.git /tmp/nix-setup
-cd /etc/nix-darwin  # or /private/etc/nix-darwin
-
-# Backup existing files
-cp flake.nix flake.nix.bak 2>/dev/null || true
-cp flake.lock flake.lock.bak 2>/dev/null || true
-
-# Copy the full configuration (all modules and home/ files are required)
-cp -r /tmp/nix-setup/* .
-# Or: rsync -av --exclude='.git' /tmp/nix-setup/ .
-
-# Set your username in flake.nix (let block: currentUser = "your-username";)
-# Then apply
-sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'
-```
-
-### Step 7: Verify Installation
-After the rebuild completes, start a new shell session and verify:
-```bash
-# Quick rebuild (no flake update): nug
-nug
-
-# Verify Kubernetes helpers (defined in ~/.functions)
-kgp 2>/dev/null || echo "kubectl not configured yet"
-
-# Check Homebrew packages
-brew list | grep -E "tfenv|kube-ps1"
-```
-
----
-
 ## Getting Started
 
 *If you're setting up nix-darwin from scratch, see the [Initial Setup from Scratch](#initial-setup-from-scratch) section above.*
@@ -147,30 +62,25 @@ brew list | grep -E "tfenv|kube-ps1"
 
 If you already have nix-darwin installed and want to use this configuration:
 
-1. **Clone this repository:**
+1. **Install Nix Installer:**
    ```bash
-   git clone https://github.com/ncsham/nix-setup.git /tmp/nix-setup
-   cd /etc/nix-darwin  # or wherever your nix-darwin config is located
+   curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install --enable-flakes
    ```
 
-2. **Backup your current configuration:**
+2. **Clone this repository:**
    ```bash
-   cp flake.nix flake.nix.bak
-   cp flake.lock flake.lock.bak 2>/dev/null || true
+   mkdir -p /etc/nix-darwin && git clone https://github.com/ncsham/nix-setup.git /etc/nix-darwin
    ```
 
-3. **Copy the new configuration** (entire repo; all modules under `home/` and root are required):
-   ```bash
-   cp -r /tmp/nix-setup/* .   # or rsync/checkout into your config dir
-   ```
+3. **Install Homebrew:**
+  Homebrew is needed for GUI applications and some packages not available in nixpkgs:
+  ```bash
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  ```
 
-4. **Review and customize:**
-   - In `flake.nix`, set `currentUser` in the `let` block to your macOS username.
-   - Nix packages: edit `packages.nix`. Homebrew: edit `configuration.nix` (`homebrew.brews` / `homebrew.casks`).
-
-5. **Apply the configuration:**
+4. **Apply the configuration:**
    ```bash
-   sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'
+    sudo /usr/bin/env USER="$USER" nix run nix-darwin/master#darwin-rebuild -- switch --impure --flake '/etc/nix-darwin#darwin'
    ```
 
 ### Quick Commands After Setup
