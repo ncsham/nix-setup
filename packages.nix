@@ -52,6 +52,8 @@
   pkgs.pulumi-bin
   pkgs.k9s
   pkgs.kubebuilder
+  pkgs.python312
+  pkgs.vscode
 
   # Enhanced git diff tools
   pkgs.delta
@@ -70,5 +72,5 @@
   pkgs.gofumpt
   pkgs.shellcheck
   pkgs.stylua
-  pkgs.nodePackages.prettier
+  pkgs.prettier
 ]

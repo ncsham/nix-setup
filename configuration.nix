@@ -6,7 +6,9 @@
 
   homebrew = {
     enable = true;
+    enableZshIntegration = true;
     onActivation.cleanup = "uninstall";
+    global.autoUpdate = false;
     taps = [ "dimentium/autoraise" "tofuutils/tap" ];
     brews = [ "tfenv" "kube-ps1" "node@24" "tofuenv" ];
     casks = [
@@ -46,6 +48,10 @@
   system.defaults.finder._FXShowPosixPathInTitle = true;
   system.keyboard.enableKeyMapping = true;
   system.keyboard.remapCapsLockToControl = true;
+  system.defaults.controlcenter.BatteryShowPercentage = true;
+  system.defaults.dock.orientation = "right";
+  system.defaults.dock.show-recents = false;
+  system.defaults.NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
 
   users.users.${currentUser} = {
     name = currentUser;

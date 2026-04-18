@@ -53,7 +53,7 @@
       postman = "open -a Postman";
       orbstack = "open -a OrbStack";
       clipy = "open -a Clipy";
-      code = "open -a Cursor";
+      # code = "open -a Cursor";
       dcl = "docker container ls -a";
       dil = "docker image ls -a";
       doc = "docker";

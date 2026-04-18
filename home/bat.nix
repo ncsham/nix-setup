@@ -1,9 +1,12 @@
 # Bat (cat replacement) configuration.
 { ... }:
 {
-  home.file.".config/bat/config".text = ''
-    --theme=Dracula
-    --style=numbers,changes
-    --paging=never
-  '';
+  programs.bat = {
+    enable = true;
+    config = {
+      theme = "Dracula";
+      style = "numbers,changes";
+      paging = "never";
+    };
+  };
 }
