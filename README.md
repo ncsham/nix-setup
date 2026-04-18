@@ -326,12 +326,37 @@ brew list --cask
 | **home/ssh.nix** | SSH config snippets (`~/.ssh/config_work`, `~/.ssh/config_personal`). |
 | **home/wezterm.nix** | Deploys `home/wezterm/wezterm.lua` to `~/.config/wezterm/wezterm.lua`. |
 | **home/oh-my-posh.nix** | Deploys `home/oh-my-posh/custom.yaml` to `~/.config/oh-my-posh/custom.yaml`. |
+| **home/vscode.nix** | VS Code Home Manager config: `programs.vscode`, user settings, and extensions. |
 | **home/wezterm/wezterm.lua** | WezTerm Lua config (standalone file for editor support). |
 | **home/oh-my-posh/custom.yaml** | Oh-My-Posh theme (YAML for editor formatting/linting). |
 | **nvim.nix** | Neovim Home Manager config (at repo root). |
 | **flake.lock** | Auto-generated lock file for flake inputs. |
 
 ---
+
+## Visual Studio Code
+
+VS Code is configured through `home/vscode.nix` using Home Manager's `programs.vscode` module.
+
+- `programs.vscode.enable = true;` enables VS Code support.
+- `programs.vscode.userSettings` is used to declaratively manage your `settings.json` values.
+- `programs.vscode.extensions` installs extensions available in nixpkgs.
+- `programs.vscode.mutableExtensionsDir = true;` allows manual installation for extensions that are not available in nixpkgs.
+- `enableUpdateCheck = false` disables VS Code's built-in update prompts while still allowing extension updates via VS Code.
+
+If an extension is missing from nixpkgs, install it manually with the VS Code CLI:
+
+```sh
+code --install-extension 4ops.packer
+code --install-extension chouzz.vscode-better-align
+code --install-extension openai.chatgpt
+code --install-extension qcz.text-power-tools
+code --install-extension qezhu.gitlink
+code --install-extension ms-python.vscode-python-envs
+code --install-extension ms-vscode.sublime-keybindings
+```
+
+To add a new nix-managed extension, add it to `extensions` in `home/vscode.nix` and redeploy.
 
 ## Terraform & tfenv
 
