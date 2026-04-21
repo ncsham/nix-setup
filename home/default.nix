@@ -10,6 +10,7 @@
     ./ssh.nix
     ./wezterm.nix
     ./oh-my-posh.nix
+    ./vscode.nix
   ];
 
   home.homeDirectory = "/Users/${currentUser}";
