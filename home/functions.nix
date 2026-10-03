@@ -5,11 +5,13 @@
     # Nix Functions
     nug() {
       local flake='/private/etc/nix-darwin#darwin'
-      sudo /usr/bin/env USER="$USER" darwin-rebuild switch --impure --flake "$flake"
+      nix flake update private --flake /private/etc/nix-darwin &&
+        sudo /usr/bin/env USER="$USER" darwin-rebuild switch --impure --flake "$flake"
     }
     nugp() {
       local flake='/private/etc/nix-darwin#darwin'
-      sudo /usr/bin/env USER="$USER" darwin-rebuild build --impure --flake "$flake" \
+      nix flake update private --flake /private/etc/nix-darwin &&
+        sudo /usr/bin/env USER="$USER" darwin-rebuild build --impure --flake "$flake" \
         && nix store diff-closures /nix/var/nix/profiles/system /private/etc/nix-darwin/result
     }
     sysugp() { nugp; }
@@ -393,6 +395,15 @@
       local local_port=$((8000 + RANDOM % 2000))
       echo "🚀 Port forwarding: svc/$service_name ($namespace) $remote_port -> localhost:$local_port"
       kubectl port-forward -n "$namespace" "svc/$service_name" "$local_port:$remote_port"
+    }
+
+    # Show the current caller identity, optionally for a profile: awswho [profile]
+    awswho() {
+      if [[ -n "$1" ]]; then
+        aws sts get-caller-identity --profile "$1"
+      else
+        aws sts get-caller-identity
+      fi
     }
   '';
 }

@@ -6,6 +6,7 @@
     ./git.nix
     ./zsh.nix
     ./functions.nix
+    ./aws.nix
     ./bat.nix
     ./ssh.nix
     ./wezterm.nix

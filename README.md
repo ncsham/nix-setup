@@ -29,6 +29,8 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
   - [Searching for Packages](#searching-for-packages)
   - [Package Sources](#package-sources)
 - [Key Components](#key-components)
+- [Private Settings](#private-settings)
+- [AWS Profiles (awsx)](#aws-profiles-awsx)
 - [Terraform & tfenv](#terraform--tfenv)
   - [Installing Specific Terraform Versions](#installing-specific-terraform-versions)
 - [Kubernetes Helper Functions](#kubernetes-helper-functions)
@@ -72,19 +74,24 @@ If you already have nix-darwin installed and want to use this configuration:
    mkdir -p /etc/nix-darwin && git clone https://github.com/ncsham/nix-setup.git /etc/nix-darwin
    ```
 
-3. **Install Homebrew:**
+3. **Clone the private settings repo** (work-only values; the flake does not evaluate without it, see [Private Settings](#private-settings)):
+   ```bash
+   git clone https://github.com/ncsham/nix-private.git /etc/nix-darwin/private
+   ```
+
+4. **Install Homebrew:**
   Homebrew is needed for GUI applications and some packages not available in nixpkgs:
   ```bash
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   ```
 
-4. **Apply the configuration:**
+5. **Apply the configuration:**
    ```bash
     sudo /usr/bin/env USER="$USER" nix run nix-darwin/master#darwin-rebuild -- switch --impure --flake '/etc/nix-darwin#darwin'
    ```
 
 ### Quick Commands After Setup
-- **Rebuild (no flake update)**: `nug`
+- **Rebuild (updates only the `private` input)**: `nug`
 - **Update flake then rebuild**: `nup` then `nug`; or combined: `sysug` (see [Package Management](#package-management))
 - **Terraform**: `tfenv list-remote`, `tfenv install <version>`, `tfenv use <version>`
 - **Kubernetes**: `kgp`, `klp`, `ktp`, `kep` (see [Kubernetes Helper Functions](#kubernetes-helper-functions))
@@ -101,9 +108,9 @@ Shell aliases (defined in `home/zsh.nix`) for updates:
 
 | Alias | Action |
 |-------|--------|
-| **nup** | Update Nix flake only (`sudo nix flake update --flake /private/etc/nix-darwin`) |
-| **nugp** | Build darwin config and show closure diff (preview changes; does not switch) |
-| **nug** | Apply current flake (`sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'`) |
+| **nup** | Update Nix flake only (`nix flake update --flake /private/etc/nix-darwin`; no `sudo`, so `.git` stays owned by you) |
+| **nugp** | Build darwin config and show closure diff (preview changes; does not switch). Updates the `private` input first, like `nug` |
+| **nug** | `nix flake update private` (latest commit of the [private settings](#private-settings) repo), then `sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'` |
 | **bu** | `brew update` |
 | **bug** | `brew upgrade && brew cleanup` |
 | **sysup** | Update both: `brew update` and Nix flake update |
@@ -132,7 +139,7 @@ sysug
 **Check what packages have updates available:**
 ```bash
 # See what packages would be updated (dry run)
-sudo nix flake update /private/etc/nix-darwin --dry-run
+nix flake update /private/etc/nix-darwin --dry-run
 
 # Check specific package version
 nix-env -qa | grep <package-name>
@@ -181,7 +188,7 @@ nup    # Update flake inputs
 nug    # Rebuild and switch
 
 # Or manually:
-sudo nix flake update --flake /private/etc/nix-darwin
+nix flake update --flake /private/etc/nix-darwin
 sudo darwin-rebuild switch --flake '/private/etc/nix-darwin#darwin'
 ```
 
@@ -314,12 +321,14 @@ brew list --cask
 
 | File or directory | Purpose |
 |-------------------|---------|
-| **flake.nix** | Flake entry: inputs, `currentUser`, and darwin config wiring (imports `configuration.nix`, home-manager, `home-manager.nix`). |
+| **flake.nix** | Flake entry: inputs (including `private`), `currentUser`, and darwin config wiring (imports `configuration.nix`, home-manager, `home-manager.nix`, and the private Home Manager module). |
+| **private/** | Local clone of the private settings repo (gitignored; see [Private Settings](#private-settings)). |
 | **configuration.nix** | macOS system config: `environment.systemPackages` (via `packages.nix`), homebrew (via `homebrew.nix`), nix settings, system defaults, users. |
 | **packages.nix** | List of Nix system packages (single function `{ pkgs }: [ ... ]`). Edit here to add/remove Nix CLI tools. |
 | **homebrew.nix** | Homebrew taps, brews and casks (single attrset). Edit here to add/remove Homebrew formulae and GUI apps. |
 | **home-manager.nix** | Home Manager integration: `useGlobalPkgs`, `useUserPackages`, `extraSpecialArgs`, and `users.<currentUser> = import ./home`. |
-| **home/default.nix** | Home Manager entry: imports (nvim, git, zsh, functions, bat, ssh, wezterm, oh-my-posh), `homeDirectory`, `stateVersion`. |
+| **home/default.nix** | Home Manager entry: imports (nvim, git, zsh, functions, aws, bat, ssh, wezterm, oh-my-posh, vscode), `homeDirectory`, `stateVersion`. |
+| **home/aws.nix** | `programs.awsx` module: builds `awsx` (`home/aws/awsx.sh`) and `awsx-okta` (`home/aws/awsx_okta.py`), adds `awsp` / `awslogin` (see [AWS Profiles](#aws-profiles-awsx)). |
 | **home/git.nix** | Git and delta configuration. |
 | **home/zsh.nix** | Zsh: shell aliases and `initContent` (options, plugins, fzf, forgit, env). |
 | **home/functions.nix** | Shell helpers written to `~/.functions` (kubectl, docker, port-forward, etc.). |
@@ -332,6 +341,40 @@ brew list --cask
 | **home/oh-my-posh/custom.yaml** | Oh-My-Posh theme (YAML for editor formatting/linting). |
 | **nvim.nix** | Neovim Home Manager config (at repo root). |
 | **flake.lock** | Auto-generated lock file for flake inputs. |
+
+---
+
+## Private Settings
+
+Work-only values (work email, Okta SSO links) live in a separate private repo, so they never reach this public one. It is cloned inside this repo at `private/` (ignored by `.gitignore`) and used as the flake input `private`, which provides a Home Manager module (`homeModules.default`, loaded via `home-manager.sharedModules`).
+
+- Edit files in `/private/etc/nix-darwin/private`, **commit** there, then run `nug`. `nug` and `nugp` run `nix flake update private` first. Uncommitted edits in the private repo are not used (Nix warns that the tree is dirty).
+- The flake does not evaluate without the clone, so clone it before the first rebuild on a new machine (see [Getting Started](#for-existing-nix-darwin-users)).
+- `flake.lock` records only the clone's local path and commit hash.
+
+## AWS Profiles (awsx)
+
+`home/aws.nix` provides `awsx`: one AWS CLI profile per account behind Okta SAML tiles, named after the AWS account, signed in with an Okta Verify push (no browser). It is enabled from the private repo:
+
+```nix
+programs.awsx = {
+  enable = true;
+  oktaUser = "you@example.com";
+  # Okta dashboard -> AWS tile -> copy link
+  tiles.team = "https://<okta-domain>/home/amazon_aws/<app-id>/272";
+};
+```
+
+| Command | Action |
+|---------|--------|
+| **awsx password** | Store the Okta password in the macOS Keychain (once, and after a password change) |
+| **awslogin** `[-f] [tile]` | Sign in (one push covers all tiles while the Okta session lasts), create a profile per account, refresh expired credentials (`-f`: all) |
+| **awsp** `[query]` | Pick a profile with fzf, refresh it if expired, export `AWS_PROFILE` |
+| **awsx ls** | List profiles with account id, tile and credential status |
+| **awsx refresh** `[-f] <profile>` | Refresh one profile if expired (`-f`: always) |
+| **awswho** `[profile]` | Show the caller identity |
+
+Credentials are written to `~/.aws/credentials`; the account index and Okta session cookies are in `~/.aws/awsx/`.
 
 ---
 
@@ -835,6 +878,7 @@ nvim       # Or: vim (alias)
 - **Oh-My-Posh theme**: `home/oh-my-posh/custom.yaml`.
 - **WezTerm**: `home/wezterm/wezterm.lua`.
 - **Git config**: `home/git.nix`. **Kubernetes/Docker shell helpers**: `home/functions.nix`.
+- **Work-only settings** (e.g. AWS Okta tiles): `home.nix` in the [private settings](#private-settings) repo; commit there, then `nug`.
 
 ---
 

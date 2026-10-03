@@ -1,0 +1,2 @@
+# Local clone of the private settings repo (flake input `private`, see flake.nix).
+/private/

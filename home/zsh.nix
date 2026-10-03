@@ -11,14 +11,14 @@
       grep = "rg";
 
       # Nix package management (nug/nugp/sysug* are functions — see initContent)
-      nup = "sudo nix flake update --flake /private/etc/nix-darwin";
+      nup = "nix flake update --flake /private/etc/nix-darwin";
 
       # Homebrew package management
       bu = "brew update";
       bug = "brew upgrade && brew cleanup";
 
       # Combined system updates
-      sysup = "brew update && sudo nix flake update --flake /private/etc/nix-darwin";
+      sysup = "brew update && nix flake update --flake /private/etc/nix-darwin";
 
       g = "git";
       gad = "git add";
@@ -47,7 +47,6 @@
       ssw = "cp ~/.ssh/config_work ~/.ssh/config";
       ktx = "kubectx";
       kns = "kubens";
-      awsp = "source _awsp";
       arc = "open -a Arc";
       keepassxc = "open -a KeePassXC";
       postman = "open -a Postman";

@@ -57,11 +57,27 @@
         "type": "github"
       }
     },
+    "private": {
+      "locked": {
+        "lastModified": 1791031471,
+        "narHash": "sha256-Q/tqm3nbIR2mGPN2ePOFikT8l+rRKyLoHaSVQmctqtw=",
+        "ref": "refs/heads/main",
+        "rev": "31cb273586a9165fb6f8383be04b1c4667e50263",
+        "revCount": 2,
+        "type": "git",
+        "url": "file:///private/etc/nix-darwin/private"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///private/etc/nix-darwin/private"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "private": "private"
       }
     }
   },
