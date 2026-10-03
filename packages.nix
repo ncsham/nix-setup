@@ -18,20 +18,16 @@
   pkgs.yq-go
   pkgs.jq
   pkgs.awscli2
-  pkgs.ansible
-  pkgs.prometheus
   pkgs.tree
   pkgs.rsync
   pkgs.wget
   pkgs.docker-compose
   pkgs.ncdu
-  pkgs.postgresql
   pkgs.minikube
   pkgs.kubectx
   pkgs.stern
   pkgs.dive
   pkgs.dust
-  pkgs.oci-cli
   pkgs.kubecolor
   pkgs.curlie
   pkgs.sops
@@ -40,8 +36,9 @@
   pkgs.shfmt
   pkgs.envsubst
   pkgs.gojsontoyaml
-  pkgs.pwgen
-  pkgs.kafkactl
+  (pkgs.pwgen.overrideAttrs (old: {
+    NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or []) ++ [ "-std=gnu89" ];
+  }))
   pkgs.oh-my-posh
   pkgs.zsh-fast-syntax-highlighting
   pkgs.zsh-autosuggestions
@@ -49,12 +46,16 @@
   pkgs.zoxide
   pkgs.zsh-forgit
   pkgs.wezterm
-  pkgs.pulumi-bin
-  pkgs.k9s
-  pkgs.kubebuilder
+  # pkgs.k9s
+  # pkgs.kubebuilder
   pkgs.python312
   pkgs.vscode
-
+  pkgs.terragrunt
+  pkgs.gh
+  pkgs.uv
+  pkgs.drawio
+  pkgs.fnm
+  
   # Enhanced git diff tools
   pkgs.delta
   pkgs.difftastic

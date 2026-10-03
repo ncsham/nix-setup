@@ -3,6 +3,7 @@
 {
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
+  home-manager.backupFileExtension = "backup";
   home-manager.extraSpecialArgs = { inherit currentUser; };
   home-manager.users.${currentUser} = import ./home;
 }

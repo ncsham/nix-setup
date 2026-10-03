@@ -6,13 +6,13 @@ This project provides a comprehensive [Nix Flake](https://nixos.wiki/wiki/Flakes
 
 ## Features
 
-- **Reproducible macOS Configuration**: System and user config are split across a modular flake: `flake.nix`, `configuration.nix`, `packages.nix`, and `home/` for Home Manager.
+- **Reproducible macOS Configuration**: System and user config are split across a modular flake: `flake.nix`, `configuration.nix`, `packages.nix`, `homebrew.nix`, and `home/` for Home Manager.
 - **Nix-Darwin Integration**: Leverage the power of Nix to manage macOS like NixOS.
 - **Home-Manager**: User-level packages and dotfiles are managed declaratively under `home/` (git, zsh, wezterm, oh-my-posh, etc.).
-- **Comprehensive Package Set**: Nix packages live in `packages.nix` (e.g. `go`, `python3`, `awscli`, `kubectl`, `helm`, `minikube`, `kops`, `bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`). Homebrew formulae and casks are in `configuration.nix`.
+- **Comprehensive Package Set**: Nix packages live in `packages.nix` (e.g. `go`, `python3`, `awscli`, `kubectl`, `helm`, `minikube`, `kops`, `bat`, `eza`, `fzf`, `ripgrep`, `htop`, `tree`). Homebrew formulae and casks are in `homebrew.nix`.
 - **Kubernetes Integration**: kubectl/helm completions and custom helper functions (see `home/functions.nix`).
 - **Oh-My-Posh**: Prompt theme is defined in YAML at `home/oh-my-posh/custom.yaml` (path, kubectl, time, tooltips).
-- **Homebrew Support**: GUI apps and extra CLI tools via Homebrew in `configuration.nix` (Postman, Raycast, OrbStack, etc.).
+- **Homebrew Support**: GUI apps and extra CLI tools via Homebrew in `homebrew.nix` (Postman, Raycast, OrbStack, etc.).
 - **Apple Silicon Ready**: Configured for `aarch64-darwin` (Apple Silicon/M1/M2).
 
 ---
@@ -294,19 +294,19 @@ brew list --cask
 - **Update**: `nup` then `nug`, or `sysug`
 
 #### Homebrew Formulas
-- **Location**: `configuration.nix` → `homebrew.brews`
+- **Location**: `homebrew.nix` → `brews`
 - **Examples**: `tfenv`, `kube-ps1`, `node@24`, `tofuenv`
 - **Update**: `bu && bug` or `sysug`
 
 #### Homebrew Casks
-- **Location**: `configuration.nix` → `homebrew.casks`
+- **Location**: `homebrew.nix` → `casks`
 - **Examples**: `postman`, `raycast`, `clipy`, `orbstack`, `keepassxc`, `rectangle`, `monokle`
 - **Update**: `bug` or `sysug`
 
 **Adding packages:**
 - **Nix**: Add `pkgs.<name>` to the list in `packages.nix`, then run `nug`.
-- **Homebrew formula**: Add to `homebrew.brews` in `configuration.nix`, then `nug`.
-- **Homebrew cask**: Add to `homebrew.casks` in `configuration.nix`, then `nug`.
+- **Homebrew formula**: Add to `brews` in `homebrew.nix`, then `nug`.
+- **Homebrew cask**: Add to `casks` in `homebrew.nix`, then `nug`.
 
 ---
 
@@ -315,8 +315,9 @@ brew list --cask
 | File or directory | Purpose |
 |-------------------|---------|
 | **flake.nix** | Flake entry: inputs, `currentUser`, and darwin config wiring (imports `configuration.nix`, home-manager, `home-manager.nix`). |
-| **configuration.nix** | macOS system config: `environment.systemPackages` (via `packages.nix`), homebrew (taps, brews, casks), nix settings, system defaults, users. |
+| **configuration.nix** | macOS system config: `environment.systemPackages` (via `packages.nix`), homebrew (via `homebrew.nix`), nix settings, system defaults, users. |
 | **packages.nix** | List of Nix system packages (single function `{ pkgs }: [ ... ]`). Edit here to add/remove Nix CLI tools. |
+| **homebrew.nix** | Homebrew taps, brews and casks (single attrset). Edit here to add/remove Homebrew formulae and GUI apps. |
 | **home-manager.nix** | Home Manager integration: `useGlobalPkgs`, `useUserPackages`, `extraSpecialArgs`, and `users.<currentUser> = import ./home`. |
 | **home/default.nix** | Home Manager entry: imports (nvim, git, zsh, functions, bat, ssh, wezterm, oh-my-posh), `homeDirectory`, `stateVersion`. |
 | **home/git.nix** | Git and delta configuration. |
@@ -807,7 +808,7 @@ nvim       # Or: vim (alias)
 
 ## Included Packages
 
-**Nix packages** are listed in **`packages.nix`**; **Homebrew** formulae and casks are in **`configuration.nix`**.
+**Nix packages** are listed in **`packages.nix`**; **Homebrew** formulae and casks are in **`homebrew.nix`**.
 
 ### Nix (packages.nix)
 
@@ -818,7 +819,7 @@ nvim       # Or: vim (alias)
 - **Shell / prompt**: `oh-my-posh`, `zsh-fast-syntax-highlighting`, `zsh-autosuggestions`, `zsh-fzf-tab`, `zoxide`, `zsh-forgit`, `wezterm`
 - **Neovim LSP/formatters**: `pyright`, `gopls`, `bash-language-server`, `lua-language-server`, `yaml-language-server`, `vscode-langservers-extracted`, `black`, `gofumpt`, `shellcheck`, `stylua`, `prettier`
 
-### Homebrew (configuration.nix)
+### Homebrew (homebrew.nix)
 
 - **Brews**: `tfenv`, `kube-ps1`, `node@24`, `tofuenv`
 - **Casks**: Postman, Raycast, Clipy, OrbStack, KeePassXC, AutoRaise, Rectangle, Monokle
@@ -829,7 +830,7 @@ nvim       # Or: vim (alias)
 
 - **Username**: Set `currentUser` in the `let` block in `flake.nix` to your macOS username.
 - **Nix packages**: Edit the list in `packages.nix`, then run `nug`.
-- **Homebrew formulae/casks**: Edit `homebrew.brews` and `homebrew.casks` in `configuration.nix`, then run `nug`.
+- **Homebrew formulae/casks**: Edit `brews` and `casks` in `homebrew.nix`, then run `nug`.
 - **Shell aliases and rc**: `home/zsh.nix`.
 - **Oh-My-Posh theme**: `home/oh-my-posh/custom.yaml`.
 - **WezTerm**: `home/wezterm/wezterm.lua`.

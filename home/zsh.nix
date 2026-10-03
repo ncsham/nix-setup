@@ -53,7 +53,7 @@
       postman = "open -a Postman";
       orbstack = "open -a OrbStack";
       clipy = "open -a Clipy";
-      # code = "open -a Cursor";
+      code = "open -a Cursor";
       dcl = "docker container ls -a";
       dil = "docker image ls -a";
       doc = "docker";
@@ -122,6 +122,8 @@
           source <(helm completion zsh) 2>/dev/null
         fi
       } &!
+
+      eval "$(fnm env --use-on-cd --shell zsh)" > /dev/null 2>&1
 
       source ${pkgs.fzf}/share/fzf/key-bindings.zsh 2>/dev/null
       source ${pkgs.fzf}/share/fzf/completion.zsh 2>/dev/null

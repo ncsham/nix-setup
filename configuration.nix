@@ -2,25 +2,8 @@
 { config, pkgs, currentUser, self, ... }:
 {
   environment.systemPackages = import ./packages.nix { inherit pkgs; };
+  homebrew = import ./homebrew.nix;
   fonts.packages = [ pkgs.nerd-fonts.hack ];
-
-  homebrew = {
-    enable = true;
-    enableZshIntegration = true;
-    onActivation.cleanup = "uninstall";
-    global.autoUpdate = false;
-    taps = [ "dimentium/autoraise" "tofuutils/tap" ];
-    brews = [ "tfenv" "kube-ps1" "node@24" "tofuenv" ];
-    casks = [
-      "postman"
-      "clipy"
-      "orbstack"
-      "keepassxc"
-      "dimentium/autoraise/autoraiseapp"
-      "rectangle"
-      "monokle"
-    ];
-  };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs.config.allowUnfree = true;

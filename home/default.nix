@@ -15,6 +15,9 @@
 
   home.homeDirectory = "/Users/${currentUser}";
 
+  # Extra directories prepended to PATH (e.g. uv-installed tools like spec-kit).
+  home.sessionPath = [ "$HOME/.local/bin" ];
+
     # The state version is required and should stay at the version you originally installed.
   home.stateVersion = "26.05";
 }
